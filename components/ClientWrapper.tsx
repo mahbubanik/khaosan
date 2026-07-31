@@ -36,7 +36,12 @@ export default function ClientWrapper({ children }: { children: React.ReactNode 
         }, observerOptions);
 
         const observeElements = () => {
-            const revealElements = document.querySelectorAll('.reveal-hidden, .reveal-clip, .reveal-toss');
+            // .reveal-stagger MUST be in this list. It was missing, so every
+            // staggered element - the whole locations grid - was observed by
+            // nothing and stayed at opacity 0 permanently.
+            const revealElements = document.querySelectorAll(
+                '.reveal-hidden, .reveal-stagger, .reveal-clip, .reveal-toss'
+            );
             revealElements.forEach(el => {
                 if (!el.classList.contains('reveal-visible') && !el.hasAttribute('data-observed')) {
                     el.setAttribute('data-observed', 'true');
@@ -64,16 +69,22 @@ export default function ClientWrapper({ children }: { children: React.ReactNode 
         };
     }, []);
 
+    if (isAdmin) return <>{children}</>;
+
     return (
         <>
-            {!isAdmin && <IgnitionVeil />}
-            {!isAdmin && <Header />}
-            {isAdmin ? (
-                children
-            ) : (
-                <main className="page-transition">{children}</main>
-            )}
-            {!isAdmin && <Footer />}
+            <IgnitionVeil />
+            <Header />
+            {/*
+              No transform on <main>. The previous build animated it, which made
+              it a containing block for position:fixed descendants and forced the
+              menu rail to be portalled out to <body>. A plain opacity fade gives
+              the same arrival without that trap.
+            */}
+            <main id="home" className="page-transition">
+                {children}
+            </main>
+            <Footer />
         </>
     );
 }

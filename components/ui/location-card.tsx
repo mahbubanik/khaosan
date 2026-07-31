@@ -1,71 +1,76 @@
-"use client";
-import React from 'react';
-import Image from 'next/image';
-import { useReservation } from '@/components/ReservationContext';
+import React from "react";
+import Image from "next/image";
+import { Outlet, whatsappLink } from "@/lib/site";
 
-export interface LocationCardProps {
-    type: string;
-    name: string;
-    address: string;
-    phone: string;
-    hours: string[];
-    imageSrc: string;
-    imageAlt?: string;
-    mapQuery: string;
-    reverse?: boolean;
-    className?: string;
-    blendTop?: boolean;
-    blendBottom?: boolean;
-}
+/**
+ * One outlet, as a contained card in a three-up grid.
+ *
+ * This replaces a full-viewport panel per branch (100vh, min-height 800px).
+ * That layout made comparing the three rooms impossible - you could only ever
+ * see one - and spent three screens on what is really a short answer: where
+ * are you, and when are you open. A card holds all of it at once.
+ *
+ * Hover stays inside the frame: the photograph scales slightly under its own
+ * overflow, the card lifts on its shadow. Nothing reflows, so a pointer
+ * crossing the grid never shifts the layout under it.
+ */
+export default function LocationCard({ outlet, priority = false }: { outlet: Outlet; priority?: boolean }) {
+    const telHref = `tel:+${outlet.phone.replace(/\D/g, "")}`;
 
-export default function LocationCard({
-    type,
-    name,
-    address,
-    phone,
-    hours,
-    imageSrc,
-    imageAlt,
-    mapQuery,
-    reverse = false,
-    className = "",
-    blendTop = false,
-    blendBottom = false
-}: LocationCardProps) {
-    const { openDrawer } = useReservation();
-    const whatsappNumber = phone.replace(/[^0-9]/g, '');
     return (
-        <div className={`reveal-hidden location-card-container ${className}`} style={{justifyContent: reverse ? 'flex-start' : 'flex-end'}}>
-            
-            {/* Massive Background Image */}
-            <div className="location-card-image-wrapper">
-                <Image src={imageSrc} alt={imageAlt || name} fill style={{objectFit: 'cover'}} sizes="100vw" />
+        <article className="loc-card reveal-stagger">
+            <div className="loc-card__media">
+                <Image
+                    src={outlet.imageSrc}
+                    alt={`Khao San ${outlet.name} dining room`}
+                    fill
+                    sizes="(max-width: 720px) 100vw, (max-width: 1080px) 50vw, 33vw"
+                    style={{ objectFit: "cover" }}
+                    priority={priority}
+                />
+                <span className="loc-card__type">{outlet.type}</span>
             </div>
-            
-            {/* Gradient Overlay for text contrast only */}
-            <div className={`location-card-gradient ${reverse ? 'align-left' : 'align-right'}`}></div>
-            
-            {/* Top and Bottom Blends for seamless integration into the page */}
-            {blendTop && <div aria-hidden="true" style={{position: 'absolute', top: 0, left: 0, width: '100%', height: '25vh', minHeight: '200px', background: 'linear-gradient(to bottom, rgba(5,7,10,1) 0%, rgba(5,7,10,0) 100%)', zIndex: 2}}></div>}
-            {blendBottom && <div aria-hidden="true" style={{position: 'absolute', bottom: 0, left: 0, width: '100%', height: '25vh', minHeight: '200px', background: 'linear-gradient(to top, rgba(5,7,10,1) 0%, rgba(5,7,10,0) 100%)', zIndex: 2}}></div>}
-            
-            {/* Typography Canvas */}
-            <div className="reveal-hidden location-card-content" style={{textAlign: reverse ? 'left' : 'right'}}>
-                <span className="overline hero-text-shadow" style={{color: 'var(--color-primary)', display: 'block', marginBottom: '24px', letterSpacing: '6px'}}>{type}</span>
-                <h2 className="display-2 hero-text-shadow" style={{marginBottom: '32px', fontSize: 'clamp(3rem, 8vw, 7rem)', fontFamily: 'var(--font-display)', lineHeight: 0.9}}>{name}</h2>
-                <p className="body-large hero-text-shadow" style={{color: 'rgba(255,255,255,0.9)', marginBottom: '32px', lineHeight: 1.8, fontSize: '1.2rem', marginLeft: reverse ? '0' : 'auto', marginRight: reverse ? 'auto' : '0'}}>{address}</p>
-                <div style={{display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '48px', alignItems: reverse ? 'flex-start' : 'flex-end'}}>
-                    <span className="hero-text-shadow" style={{color: 'var(--color-text-primary)', fontWeight: 600, letterSpacing: '2px', fontSize: '1.1rem'}}>📞 {phone}</span>
-                    {hours.map((line) => (
-                        <span key={line} className="hero-text-shadow" style={{color: 'rgba(255,255,255,0.8)', fontSize: '0.95rem', textTransform: 'uppercase', letterSpacing: '1px'}}>{line}</span>
-                    ))}
-                </div>
-                <div style={{display: 'flex', gap: '16px', flexWrap: 'wrap', justifyContent: reverse ? 'flex-start' : 'flex-end'}}>
-                    <button onClick={openDrawer} className="btn btn-primary">Reserve Table</button>
-                    <a href={`https://wa.me/${whatsappNumber}`} target="_blank" rel="noreferrer" className="btn btn-secondary">WhatsApp</a>
-                    <a href={`https://maps.google.com/?q=${encodeURIComponent(mapQuery)}`} target="_blank" rel="noreferrer" className="btn btn-secondary">Directions</a>
+
+            <div className="loc-card__body">
+                <h3 className="loc-card__name">{outlet.name}</h3>
+                <address className="loc-card__address">{outlet.address}</address>
+
+                <dl className="loc-card__meta">
+                    <div>
+                        <dt>Hours</dt>
+                        <dd>
+                            {outlet.hours.map((h) => (
+                                <span key={h}>{h}</span>
+                            ))}
+                        </dd>
+                    </div>
+                    <div>
+                        <dt>Phone</dt>
+                        <dd>
+                            <a href={telHref}>{outlet.phone}</a>
+                        </dd>
+                    </div>
+                </dl>
+
+                <div className="loc-card__actions">
+                    <a
+                        href={whatsappLink(`Hello Khao San! I'd like to enquire about a table at ${outlet.name}.`)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn btn-primary btn--sm"
+                    >
+                        Contact Us
+                    </a>
+                    <a
+                        href={`https://maps.google.com/?q=${encodeURIComponent(outlet.mapQuery)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn btn-secondary btn--sm"
+                    >
+                        Directions
+                    </a>
                 </div>
             </div>
-        </div>
+        </article>
     );
 }

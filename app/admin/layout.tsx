@@ -1,78 +1,62 @@
 "use client";
 
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 
+/**
+ * Shell for the private menu-management panel. The Reservations entry is gone
+ * along with the reservation system itself - it pointed at a deleted route.
+ */
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const router = useRouter();
 
-    // Do not show sidebar on the login page
-    if (pathname === '/admin/login') {
+    // The login page is its own full-screen surface, with no shell around it.
+    if (pathname === "/admin/login") {
         return <>{children}</>;
     }
 
     const handleLogout = async () => {
-        await fetch('/api/auth/logout', { method: 'POST' });
-        router.push('/admin/login');
+        await fetch("/api/auth/logout", { method: "POST" });
+        router.push("/admin/login");
         router.refresh();
     };
 
     const navItems = [
-        { label: 'Overview', href: '/admin' },
-        { label: 'Menu Control', href: '/admin/menu' },
-        { label: 'Reservations', href: '/admin/reservations' },
+        { label: "Overview", href: "/admin" },
+        { label: "Menu Control", href: "/admin/menu" },
     ];
 
     return (
-        <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: 'var(--color-background-base)' }}>
-            
-            {/* Sidebar */}
-            <aside style={{ width: '280px', backgroundColor: 'var(--color-surface-base)', borderRight: '1px solid rgba(255,255,255,0.05)', display: 'flex', flexDirection: 'column' }}>
-                <div style={{ padding: '32px 24px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                    <span style={{ color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '4px', fontSize: '0.8rem', fontWeight: 600 }}>Admin Portal</span>
-                    <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.8rem', marginTop: '8px' }}>Khao San</h2>
+        <div className="admin">
+            <aside className="admin__side">
+                <div className="admin__brand">
+                    <span className="overline">Admin Portal</span>
+                    <h2>Khao San</h2>
                 </div>
 
-                <nav style={{ padding: '24px 16px', flex: 1, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <nav className="admin__nav">
                     {navItems.map((item) => (
-                        <Link 
-                            key={item.href} 
+                        <Link
+                            key={item.href}
                             href={item.href}
-                            style={{
-                                padding: '12px 16px',
-                                borderRadius: '8px',
-                                textDecoration: 'none',
-                                color: pathname === item.href ? 'var(--color-primary)' : 'var(--color-text-secondary)',
-                                backgroundColor: pathname === item.href ? 'rgba(240, 139, 67, 0.1)' : 'transparent',
-                                transition: 'all 0.2s',
-                                fontWeight: pathname === item.href ? 500 : 400
-                            }}
+                            aria-current={pathname === item.href ? "page" : undefined}
                         >
                             {item.label}
                         </Link>
                     ))}
                 </nav>
 
-                <div style={{ padding: '24px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                    <button 
-                        onClick={handleLogout}
-                        style={{ width: '100%', padding: '12px', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: 'var(--color-text-secondary)', borderRadius: '8px', cursor: 'pointer', transition: 'all 0.2s' }}
-                        onMouseOver={(e) => { e.currentTarget.style.borderColor = 'var(--color-primary)'; e.currentTarget.style.color = 'var(--color-primary)'; }}
-                        onMouseOut={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.1)'; e.currentTarget.style.color = 'var(--color-text-secondary)'; }}
-                    >
+                <div className="admin__foot">
+                    <button onClick={handleLogout} className="btn btn-secondary btn--sm" style={{ width: "100%" }}>
                         Sign Out
                     </button>
                 </div>
             </aside>
 
-            {/* Main Content Area */}
-            <main style={{ flex: 1, overflowY: 'auto', padding: '48px', position: 'relative' }}>
-                <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-                    {children}
-                </div>
+            <main className="admin__main">
+                <div className="admin__inner">{children}</div>
             </main>
-
         </div>
     );
 }

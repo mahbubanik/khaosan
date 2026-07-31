@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
 // Temporary mock data structure to mimic future Supabase response
-let mockMenuData = [
+const mockMenuData = [
     { id: 1, name: 'Tom Yum Goong', category: 'Soups', price: '৳ 850', description: 'Classic spicy & sour broth, river prawns, lemongrass, galangal, kaffir lime.', image: null },
     { id: 2, name: 'Som Tum Thai', category: 'Salads', price: '৳ 550', description: 'Green papaya, cherry tomatoes, snake beans, peanuts, tamarind-lime dressing.', image: null },
     { id: 3, name: 'Pad Thai Goong', category: 'Noodles', price: '৳ 750', description: 'Rice noodles, prawns, egg, tofu, peanuts, bean sprouts, tamarind glaze.', image: null },
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
         mockMenuData.push(newItem);
         
         return NextResponse.json({ success: true, data: newItem });
-    } catch (error) {
+    } catch {
         return NextResponse.json({ error: 'Failed to create menu item' }, { status: 500 });
     }
 }

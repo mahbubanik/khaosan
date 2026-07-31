@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">
+  <!--
+    Khao San lattice tile.
+
+    Redrawn from the brand's own artwork: the tone-on-tone Thai pattern behind
+    the blue elephant mark on orange (public/assets/Brand_Asset/4330758...n.jpg).
+    A 45-degree diamond lattice with a four-petal bloom set inside each diamond,
+    which is the classic Thai "prajam yam" motif the client's designer used.
+
+    Drawn almost entirely in STROKE, not fill. An earlier version built the
+    rosette from four solid ellipses; masked back at 5-15% opacity the diamond
+    outlines vanished and the rosette rendered as a fat plus sign, so the whole
+    page read as scattered crosses rather than as a woven lattice. Line work
+    survives being faded; solid blobs do not.
+
+    Painted in a single flat colour and consumed as a CSS mask (see .lattice in
+    globals.css), so one file tints to any brand colour and any opacity - blue
+    on light sections, white on deep blue, blue again on orange.
+
+    Tiles seamlessly: the outer diamond meets the tile edges exactly at their
+    midpoints, so neighbouring tiles complete each other's diamonds.
+  -->
+  <g fill="none" stroke="#000" stroke-width="1.5" stroke-linejoin="round">
+    <path d="M48 0 L96 48 L48 96 L0 48 Z"/>
+    <path d="M48 16 L80 48 L48 80 L16 48 Z"/>
+  </g>
+  <g fill="none" stroke="#000" stroke-width="1.3" stroke-linejoin="round">
+    <path d="M48 34 C54 40 54 44 48 48 C42 44 42 40 48 34 Z"/>
+    <path d="M62 48 C56 54 52 54 48 48 C52 42 56 42 62 48 Z"/>
+    <path d="M48 62 C42 56 42 52 48 48 C54 52 54 56 48 62 Z"/>
+    <path d="M34 48 C40 42 44 42 48 48 C44 54 40 54 34 48 Z"/>
+  </g>
+  <g fill="#000">
+    <circle cx="48" cy="0" r="2.2"/>
+    <circle cx="0" cy="48" r="2.2"/>
+    <circle cx="96" cy="48" r="2.2"/>
+    <circle cx="48" cy="96" r="2.2"/>
+  </g>
+</svg>

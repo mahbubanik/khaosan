@@ -1,9 +1,7 @@
 "use client";
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { createPortal } from 'react-dom';
-import Image from 'next/image';
-import MenuCard, { MenuBadge } from '@/components/ui/menu-card';
-import SectionBlend from '@/components/ui/section-blend';
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import Image from "next/image";
+import MenuCard, { MenuBadge } from "@/components/ui/menu-card";
 
 interface RawMenuItem {
     number: number;
@@ -195,446 +193,344 @@ const MENU_DATA: MenuCategory[] = [
     },
 ];
 
+const TERMS = [
+    "All prices are inclusive of 5% VAT and applicable SD.",
+    "A 5% service charge is applied on the final bill.",
+    "All meat served is 100% halal.",
+    "All prices are listed in Bangladeshi Taka (BDT).",
+    "Please alert your server if you are allergic to any ingredients.",
+];
 
-const prefersReducedMotion = () =>
-    typeof window !== 'undefined' &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const LEGEND: { key: MenuBadge; label: string }[] = [
+    { key: "spicy", label: "Spicy" },
+    { key: "special", label: "Special" },
+    { key: "featured", label: "Featured" },
+    { key: "new", label: "New" },
+];
 
+const reduced = () =>
+    typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/**
+ * The full catalogue - 75 dishes across 14 categories, transcribed from the
+ * client's printed menu, prices included.
+ *
+ * Two navigation systems, each for the input it suits:
+ *  - desktop/tablet: a sticky horizontal pill bar under the header;
+ *  - phones: the contextual rail on the right edge. Drag a thumb down it and
+ *    sections magnify under the touch; release or tap to jump. It is a
+ *    document outline you steer by feel, it never covers the food, and it is
+ *    the most considered thing on this page - reachable one-handed, which a
+ *    horizontal bar at the top of a 16,000px page is not.
+ */
 export default function Menu() {
     const [activeIndex, setActiveIndex] = useState(0);
-    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
-    const [railVisible, setRailVisible] = useState(false);
-    useEffect(() => {
-        const hero = document.querySelector('.menu-hero');
-        if (!hero) return;
-        const observer = new IntersectionObserver(
-            ([entry]) => setRailVisible(!entry.isIntersecting),
-            { threshold: 0 }
-        );
-        observer.observe(hero);
-        return () => observer.disconnect();
-    }, []);
-    const navRefs = useRef<(HTMLAnchorElement | null)[]>([]);
-    const [pillStyle, setPillStyle] = useState({ left: 0, width: 0, opacity: 0 });
-    const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const [railActive, setRailActive] = useState(false);
+    const barRef = useRef<HTMLDivElement>(null);
+    const itemRefs = useRef<(HTMLAnchorElement | null)[]>([]);
+    const railRef = useRef<HTMLElement>(null);
+    const railPressed = useRef(false);
 
-    // Update the sliding pill position
-    useEffect(() => {
-        const currentRef = navRefs.current[activeIndex];
-        if (currentRef && scrollContainerRef.current) {
-            // Calculate left relative to the scroll container's content
-            // offsetLeft is relative to the offsetParent (the container if it has position: relative)
-            setPillStyle({
-                left: currentRef.offsetLeft,
-                width: currentRef.offsetWidth,
-                opacity: 1
-            });
-
-            // Scroll the container to keep the active item in view
-            const container = scrollContainerRef.current;
-            const scrollLeft = currentRef.offsetLeft - container.offsetWidth / 2 + currentRef.offsetWidth / 2;
-            container.scrollTo({ left: scrollLeft, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
-        }
-    }, [activeIndex]);
-
-    // Intersection Observer for scroll tracking
+    /* Mark the category currently under the header. */
     useEffect(() => {
         const observers: IntersectionObserver[] = [];
-
         MENU_DATA.forEach((category, index) => {
             const el = document.getElementById(category.id);
-            if (el) {
-                const observer = new IntersectionObserver(
-                    ([entry]) => {
-                        if (entry.isIntersecting) {
-                            setActiveIndex(index);
-                        }
-                    },
-                    { rootMargin: '-20% 0px -75% 0px' }
-                );
-                observer.observe(el);
-                observers.push(observer);
-            }
+            if (!el) return;
+            const observer = new IntersectionObserver(
+                ([entry]) => {
+                    if (entry.isIntersecting) setActiveIndex(index);
+                },
+                { rootMargin: "-22% 0px -70% 0px" }
+            );
+            observer.observe(el);
+            observers.push(observer);
         });
-
-        return () => {
-            observers.forEach(obs => obs.disconnect());
-        };
+        return () => observers.forEach((o) => o.disconnect());
     }, []);
 
-    const handleClick = (e: React.MouseEvent<HTMLAnchorElement>, index: number, id: string) => {
-        e.preventDefault();
-        setActiveIndex(index);
-        const el = document.getElementById(id);
-        if (el) {
-            // smooth scroll to element, accounting for sticky headers
-            const y = el.getBoundingClientRect().top + window.scrollY - 140;
-            window.scrollTo({ top: y, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
-        }
-    };
-
-    const railPressed = useRef(false);
-    const railRef = useRef<HTMLElement>(null);
-
-    const focusFromPoint = useCallback((clientX: number, clientY: number) => {
-        const items = railRef.current?.querySelectorAll('[data-index]');
-        if (!items) return;
-        let closest: Element | null = null;
-        let closestDist = Infinity;
-        items.forEach(item => {
-            const rect = item.getBoundingClientRect();
-            const cy = rect.top + rect.height / 2;
-            const dist = Math.abs(clientY - cy);
-            if (dist < closestDist) { closestDist = dist; closest = item; }
+    /* Keep the active pill in view without the reader scrolling the bar. */
+    useEffect(() => {
+        const pill = itemRefs.current[activeIndex];
+        const bar = barRef.current;
+        if (!pill || !bar) return;
+        bar.scrollTo({
+            left: pill.offsetLeft - bar.clientWidth / 2 + pill.offsetWidth / 2,
+            behavior: reduced() ? "auto" : "smooth",
         });
-        if (closest) {
-            const idx = parseInt((closest as HTMLElement).getAttribute('data-index') || '', 10);
-            if (!isNaN(idx)) setFocusedIndex(idx);
-        }
-    }, []);
+    }, [activeIndex]);
 
     const jumpTo = useCallback((index: number) => {
-        const category = MENU_DATA[index];
-        const el = document.getElementById(category.id);
-        if (el) {
-            const y = el.getBoundingClientRect().top + window.scrollY - 120;
-            window.scrollTo({ top: y, behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
-            setActiveIndex(index);
+        const el = document.getElementById(MENU_DATA[index].id);
+        if (!el) return;
+        window.scrollTo({
+            top: el.getBoundingClientRect().top + window.scrollY - 130,
+            behavior: reduced() ? "auto" : "smooth",
+        });
+        setActiveIndex(index);
+    }, []);
+
+    const jumpFromLink = useCallback(
+        (e: React.MouseEvent, index: number, id: string) => {
+            e.preventDefault();
+            jumpTo(index);
+            history.replaceState(null, "", `#${id}`);
+        },
+        [jumpTo]
+    );
+
+    /* Which rail entry is nearest the finger. */
+    const focusFromPoint = useCallback((clientY: number) => {
+        const items = railRef.current?.querySelectorAll("[data-index]");
+        if (!items) return;
+        let closest: Element | null = null;
+        let best = Infinity;
+        items.forEach((item) => {
+            const r = item.getBoundingClientRect();
+            const d = Math.abs(clientY - (r.top + r.height / 2));
+            if (d < best) {
+                best = d;
+                closest = item;
+            }
+        });
+        if (closest) {
+            const idx = parseInt((closest as HTMLElement).dataset.index || "", 10);
+            if (!Number.isNaN(idx)) setFocusedIndex(idx);
         }
     }, []);
 
-    const handleRailStart = useCallback((clientX: number, clientY: number) => {
-        railPressed.current = true;
-        setMobileMenuOpen(true);
-        focusFromPoint(clientX, clientY);
-    }, [focusFromPoint]);
-
-    const handleRailMove = useCallback((clientY: number) => {
-        if (!railPressed.current) return;
-        focusFromPoint(0, clientY);
-    }, [focusFromPoint]);
-
-    const handleRailEnd = useCallback(() => {
-        if (railPressed.current && focusedIndex !== null) {
-            jumpTo(focusedIndex);
-        }
+    const railStart = useCallback(
+        (y: number) => {
+            railPressed.current = true;
+            setRailActive(true);
+            focusFromPoint(y);
+        },
+        [focusFromPoint]
+    );
+    const railMove = useCallback(
+        (y: number) => {
+            if (railPressed.current) focusFromPoint(y);
+        },
+        [focusFromPoint]
+    );
+    const railEnd = useCallback(() => {
+        if (railPressed.current && focusedIndex !== null) jumpTo(focusedIndex);
         railPressed.current = false;
-        setMobileMenuOpen(false);
+        setRailActive(false);
         setFocusedIndex(null);
     }, [focusedIndex, jumpTo]);
 
     return (
         <>
-        {/*  Menu Hero - one dramatic dish under a warm spotlight, immersive  */}
-        <section className="menu-hero bg-lattice">
-            <div className="menu-hero-glow" aria-hidden="true"></div>
-            <div className="menu-hero-inner">
-                <div className="reveal-hidden menu-hero-copy">
-                    <span className="overline" style={{ color: 'var(--color-primary)', letterSpacing: '4px', display: 'block', marginBottom: '18px' }}>The Menu</span>
-                    <h1 className="display-1" style={{ marginBottom: '24px', color: 'var(--color-text-primary)', fontFamily: 'var(--font-display)', fontWeight: 700, lineHeight: 1.02 }}>
-                        A journey<br />through fire.
-                    </h1>
-                    <p className="body-large" style={{ color: 'var(--color-text-secondary)', fontSize: '1.2rem', lineHeight: 1.6, maxWidth: '44ch', marginBottom: '20px' }}>
-                        From fiery street-stall classics to whole-fish showpieces - every plate carries the char, spice and balance of Bangkok.
-                    </p>
-                    <p style={{ color: 'var(--color-primary)', fontWeight: 600, letterSpacing: '0.08em', fontSize: '0.9rem', marginBottom: '40px' }}>
-                        75 dishes · 14 chapters
-                    </p>
-                    <a href="#a-appetizers" className="btn btn-primary" onClick={(e) => handleClick(e, 0, 'a-appetizers')}>Begin with Appetizers</a>
-                </div>
+            {/* Menu hero - the copy on one side, a layered cluster of plates on
+                the other: one hero dish with two satellites at different scales
+                and depths, so the opening reads as a composed still life rather
+                than a banner with a headline on it. */}
+            <section className="menu-hero lotus lotus--mandala lotus--deep on-deep">
+                <div className="menu-hero__inner">
+                    <div className="menu-hero__copy reveal-hidden">
+                        <span className="overline">The Menu</span>
+                        <h1 className="menu-hero__title">
+                            A journey
+                            <span className="menu-hero__script script-accent">through fire</span>
+                        </h1>
+                        <p className="menu-hero__lede">
+                            From fiery street-stall classics to whole-fish showpieces &mdash; every plate carries
+                            the char, spice and balance of Bangkok.
+                        </p>
+                        <p className="menu-hero__count">75 dishes &middot; 14 chapters</p>
+                        <a
+                            href="#a-appetizers"
+                            className="btn btn-primary"
+                            onClick={(e) => jumpFromLink(e, 0, "a-appetizers")}
+                        >
+                            Begin with Appetizers
+                        </a>
+                    </div>
 
-                <div className="reveal-hidden menu-hero-stage">
-                    <div className="menu-hero-cluster">
-                        <div className="dish dish--float mh-dish mh-dish--hero" style={{ aspectRatio: '1 / 1' }}>
-                            <Image className="dish-img img-feather" src="/assets/Menu/KS Menu Webp/B. Soups/Tom Yum Goong.webp" alt="Tom Yum Goong" fill sizes="(max-width: 860px) 60vw, 30vw" priority />
-                        </div>
-                        <div className="dish dish--float mh-dish mh-dish--sat-a" style={{ aspectRatio: '1 / 1' }}>
-                            <Image className="dish-img img-feather" src="/assets/Menu/KS Menu Webp/E. Noodles/Pad Thai.webp" alt="Pad Thai" fill sizes="(max-width: 860px) 34vw, 17vw" />
-                        </div>
-                        <div className="dish dish--float mh-dish mh-dish--sat-b" style={{ aspectRatio: '1 / 1' }}>
-                            <Image className="dish-img img-feather" src="/assets/Menu/KS Menu Webp/D. Salads/Som Tam (Thai Papaya Salad).webp" alt="Som Tam papaya salad" fill sizes="(max-width: 860px) 26vw, 13vw" />
+                    <div className="menu-hero__stage reveal-hidden">
+                        <div className="menu-hero__cluster">
+                            <div className="dish dish--float mh-dish mh-dish--hero">
+                                <Image
+                                    className="dish-img"
+                                    src="/assets/Menu/KS Menu Webp/B. Soups/Tom Yum Goong.webp"
+                                    alt="Tom Yum Goong"
+                                    fill
+                                    sizes="(max-width: 860px) 60vw, 30vw"
+                                    priority
+                                />
+                            </div>
+                            <div className="dish dish--float mh-dish mh-dish--sat-a">
+                                <Image
+                                    className="dish-img"
+                                    src="/assets/Menu/KS Menu Webp/E. Noodles/Pad Thai.webp"
+                                    alt="Pad Thai"
+                                    fill
+                                    sizes="(max-width: 860px) 34vw, 17vw"
+                                />
+                            </div>
+                            <div className="dish dish--float mh-dish mh-dish--sat-b">
+                                <Image
+                                    className="dish-img"
+                                    src="/assets/Menu/KS Menu Webp/D. Salads/Som Tam (Thai Papaya Salad).webp"
+                                    alt="Som Tam papaya salad"
+                                    fill
+                                    sizes="(max-width: 860px) 26vw, 13vw"
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div style={{ position: 'absolute', bottom: '24px', left: '50%', transform: 'translateX(-50%)', zIndex: 3, textAlign: 'center', opacity: 0.6 }}>
-                <div className="ember-drift-track"><div className="ember-drift-dot"></div></div>
-            </div>
-            <SectionBlend />
-        </section>
+                <div className="menu-hero__cue" aria-hidden="true">
+                    <span className="ember-drift-track">
+                        <span className="ember-drift-dot" />
+                    </span>
+                </div>
+            </section>
 
-        {/*  Category Navigation  */}
-        <section
-            className="menu-nav-section"
-            style={{
-                position: 'sticky',
-                top: '100px', // Below the main header, with a bit of gap
-                zIndex: 50,
-                padding: '0 var(--space-component)', // Add padding to avoid touching screen edges
-                display: 'flex',
-                justifyContent: 'center',
-                pointerEvents: 'none', // Let clicks pass through the invisible section wrapper
-            }}
-        >
-            <div
-                className="container"
-                style={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    pointerEvents: 'auto' // Re-enable clicks for the actual nav
-                }}
-            >
-                <div
-                    ref={scrollContainerRef}
-                    className="menu-nav"
-                    style={{
-                        backgroundColor: 'var(--color-surface-elevated)', // elevated brand color
-                        border: '1px solid var(--color-border)',
-                        boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
-                        borderRadius: '40px',
-                        padding: '8px',
-                        display: 'flex',
-                        position: 'relative',
-                        overflowX: 'auto',
-                        scrollbarWidth: 'none',
-                        WebkitOverflowScrolling: 'touch',
-                        gap: '8px',
-                        maxWidth: '100%'
-                    }}
-                >
-                    {/* The Sliding Pill */}
-                    <div
-                        style={{
-                            position: 'absolute',
-                            top: 0,
-                            height: '100%',
-                            left: `${pillStyle.left}px`,
-                            width: `${pillStyle.width}px`,
-                            opacity: pillStyle.opacity,
-                            backgroundColor: 'var(--color-primary)', // Solid primary brand color
-                            borderRadius: '30px',
-                            transition: 'all 0.4s cubic-bezier(0.25, 1, 0.5, 1)',
-                            pointerEvents: 'none', // Allow clicking through
-                            zIndex: 0,
-                            boxShadow: '0 4px 12px rgba(240, 139, 67, 0.4)' // Glow effect matching the primary color
-                        }}
-                    />
-
+            <nav className="menu-nav" aria-label="Menu categories">
+                <div className="menu-nav__scroll" ref={barRef}>
                     {MENU_DATA.map((category, index) => (
                         <a
                             key={category.id}
                             href={`#${category.id}`}
-                            className="overline menu-nav-item"
-                            ref={el => { navRefs.current[index] = el; }}
-                            onClick={(e) => handleClick(e, index, category.id)}
-                            style={{
-                                position: 'relative',
-                                zIndex: 1,
-                                whiteSpace: 'nowrap',
-                                textDecoration: 'none',
-                                padding: '10px 24px',
-                                color: activeIndex === index ? '#ffffff' : 'var(--color-text-secondary)',
-                                fontWeight: activeIndex === index ? 600 : 400,
-                                transition: 'color 0.3s ease, font-weight 0.3s ease',
-                                fontSize: '0.8rem',
-                                letterSpacing: '0.15em',
-                                margin: 0,
-                                borderRadius: '30px'
+                            ref={(el) => {
+                                itemRefs.current[index] = el;
                             }}
+                            className="menu-nav__item"
+                            aria-current={activeIndex === index ? "true" : undefined}
+                            onClick={(e) => jumpFromLink(e, index, category.id)}
                         >
                             {category.name}
                         </a>
                     ))}
                 </div>
-            </div>
-            <style dangerouslySetInnerHTML={{__html: `
-                .menu-nav::-webkit-scrollbar { display: none; }
-                .mobile-vertical-nav {
-                    display: none;
-                }
-                @media (max-width: 1024px) {
-                    .menu-nav-section {
-                        top: 80px !important;
-                        padding: 0 !important;
-                        width: 100vw !important;
-                        left: 50% !important;
-                        right: 50% !important;
-                        margin-left: -50vw !important;
-                        margin-right: -50vw !important;
-                        background-color: rgba(5, 7, 10, 0.88) !important;
-                        backdrop-filter: blur(12px) !important;
-                        -webkit-backdrop-filter: blur(12px) !important;
-                        border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important;
-                    }
-                    .menu-nav-section > div {
-                        justify-content: flex-start !important;
-                        padding: 0 !important;
-                        width: 100% !important;
-                        max-width: 100% !important;
-                    }
-                    .menu-nav {
-                        max-width: 100% !important;
-                        width: 100% !important;
-                        border-radius: 0 !important;
-                        border: none !important;
-                        background-color: transparent !important;
-                        box-shadow: none !important;
-                        padding: 8px 16px !important;
-                        overflow-x: auto !important;
-                        -webkit-overflow-scrolling: touch !important;
-                    }
-                }
-                @media (max-width: 768px) {
-                    .menu-nav-section {
-                        display: none !important;
-                    }
-                    .menu-category h2 {
-                        font-size: 2rem !important;
-                        padding-bottom: 16px !important;
-                        margin-bottom: 32px !important;
-                    }
-                }
-            `}} />
-        </section>
+            </nav>
 
-        {/* Phone-only contextual section rail - a document-outline navigator.
-            Drag a finger along it and sections magnify under the touch; release
-            or tap to jump. The active section stays marked at all times. Hidden
-            on desktop, where the horizontal pill nav takes over. Portalled to
-            <body> so its position:fixed escapes the transformed page wrapper. */}
-        {railVisible && createPortal(
-        <>
-        {/* Backdrop strip - darkens the rail area on touch so white labels
-            never collide with white menu content behind them. */}
-        <div
-            aria-hidden="true"
-            className={`menu-rail-backdrop ${mobileMenuOpen ? 'menu-rail-backdrop--active' : ''}`}
-        />
-        <nav
-            ref={railRef}
-            className={`menu-rail ${mobileMenuOpen ? 'menu-rail--active' : ''}`}
-            aria-label="Menu sections"
-            onTouchStart={(e) => { e.preventDefault(); const t = e.touches[0]; handleRailStart(t.clientX, t.clientY); }}
-            onTouchMove={(e) => { e.preventDefault(); const t = e.touches[0]; handleRailMove(t.clientY); }}
-            onTouchEnd={() => handleRailEnd()}
-            onTouchCancel={() => handleRailEnd()}
-            onPointerDown={(e) => { if (e.pointerType === 'mouse') handleRailStart(e.clientX, e.clientY); }}
-            onPointerMove={(e) => { if (e.pointerType === 'mouse') handleRailMove(e.clientY); }}
-            onPointerUp={(e) => { if (e.pointerType === 'mouse') handleRailEnd(); }}
-        >
-            {MENU_DATA.map((category, index) => {
-                const refIndex = focusedIndex !== null ? focusedIndex : activeIndex;
-                const isActive = index === activeIndex;
-                const isRef = index === refIndex;
-                const distance = Math.abs(index - refIndex);
-                const showName = mobileMenuOpen;
-                const dashW = distance === 0 ? 30 : distance === 1 ? 18 : distance === 2 ? 11 : 6;
-                const nameScale = distance === 0 ? 1 : distance === 1 ? 0.9 : 0.82;
-                const nameOpacity = distance === 0 ? 1 : distance === 1 ? 0.72 : distance === 2 ? 0.45 : 0.28;
-                const dashOpacity = isActive ? 1 : 0.25 + (1 - Math.min(distance, 3) / 3) * 0.55;
-                return (
-                    <button
-                        key={category.id}
-                        type="button"
-                        data-index={index}
-                        aria-current={isActive ? 'true' : undefined}
-                        className="menu-rail-item"
-                        onClick={() => jumpTo(index)}
-                    >
-                        <span
-                            className="menu-rail-name"
+            {/* Phone-only contextual rail. */}
+            <div
+                aria-hidden="true"
+                className={`menu-rail-backdrop ${railActive ? "menu-rail-backdrop--active" : ""}`}
+            />
+            <nav
+                ref={railRef}
+                className={`menu-rail ${railActive ? "menu-rail--active" : ""}`}
+                aria-label="Jump to menu section"
+                onTouchStart={(e) => {
+                    e.preventDefault();
+                    railStart(e.touches[0].clientY);
+                }}
+                onTouchMove={(e) => {
+                    e.preventDefault();
+                    railMove(e.touches[0].clientY);
+                }}
+                onTouchEnd={railEnd}
+                onTouchCancel={railEnd}
+                onPointerDown={(e) => e.pointerType === "mouse" && railStart(e.clientY)}
+                onPointerMove={(e) => e.pointerType === "mouse" && railMove(e.clientY)}
+                onPointerUp={(e) => e.pointerType === "mouse" && railEnd()}
+            >
+                {MENU_DATA.map((category, index) => {
+                    const ref = focusedIndex !== null ? focusedIndex : activeIndex;
+                    const isActive = index === activeIndex;
+                    const distance = Math.abs(index - ref);
+                    /* Dash length and label weight fall off with distance from
+                       the finger - the fisheye that makes the rail steerable. */
+                    const dash = distance === 0 ? 30 : distance === 1 ? 18 : distance === 2 ? 11 : 6;
+                    const scale = distance === 0 ? 1 : distance === 1 ? 0.9 : 0.82;
+                    const nameOpacity =
+                        distance === 0 ? 1 : distance === 1 ? 0.72 : distance === 2 ? 0.45 : 0.28;
+                    return (
+                        <button
+                            key={category.id}
+                            type="button"
                             data-index={index}
-                            style={{
-                                opacity: showName ? nameOpacity : 0,
-                                transform: `translateY(-50%) translateX(${showName ? 0 : 12}px) scale(${nameScale})`,
-                                color: isRef ? 'var(--color-primary)' : 'var(--color-text-primary)',
-                            }}
+                            className="menu-rail-item"
+                            aria-current={isActive ? "true" : undefined}
+                            aria-label={category.name}
+                            onClick={() => jumpTo(index)}
                         >
-                            {category.name}
-                        </span>
-                        <span
-                            className="menu-rail-dash"
-                            data-index={index}
-                            style={{
-                                width: `${dashW}px`,
-                                backgroundColor: isActive ? 'var(--color-primary)' : '#fff',
-                                opacity: dashOpacity,
-                                boxShadow: isActive ? '0 0 10px var(--color-primary)' : 'none',
-                            }}
-                        />
-                    </button>
-                );
-            })}
-        </nav>,
-        </>,
-        document.body)}
+                            <span
+                                className="menu-rail-name"
+                                style={{
+                                    opacity: railActive ? nameOpacity : 0,
+                                    transform: `translateY(-50%) translateX(${railActive ? 0 : 12}px) scale(${scale})`,
+                                }}
+                            >
+                                {category.name}
+                            </span>
+                            <span
+                                className="menu-rail-dash"
+                                style={{
+                                    width: `${dash}px`,
+                                    opacity: isActive ? 1 : 0.3 + (1 - Math.min(distance, 3) / 3) * 0.5,
+                                }}
+                            />
+                        </button>
+                    );
+                })}
+            </nav>
 
-        {/* Menu Sections - continuous scroll */}
-        <div className="menu-sections bg-lattice" style={{backgroundColor: 'var(--color-surface-base)', paddingTop: 'clamp(56px, 7vw, 104px)', paddingBottom: '80px'}}>
-            {MENU_DATA.map((category) => (
-                <section key={category.id} id={category.id} className="menu-category" style={{marginBottom: 'var(--space-macro)'}}>
-                    <div className="container">
-                        <h2 className="display-2" style={{borderBottom: '1px solid rgba(255,255,255,0.05)', paddingBottom: '40px', marginBottom: '80px', fontSize: 'clamp(3rem, 6vw, 4.5rem)'}}>
-                            {category.name}
-                        </h2>
-                        <div className="menu-grid" style={{ columnGap: '8vw' }}>
-                            {category.items.map((item, index) => (
-                                <MenuCard
-                                    key={item.number}
-                                    index={index}
-                                    number={item.number}
-                                    title={item.title}
-                                    imageSrc={item.imageSrc}
-                                    price={item.price}
-                                    groupPrice={item.groupPrice}
-                                    portionNote={item.portionNote}
-                                    description={item.description}
-                                    badges={item.badges}
-                                    addOnNote={item.addOnNote}
-                                    angled={item.angled}
-                                />
-                            ))}
-                        </div>
+            <div className="section menu-list lattice lattice--quiet">
+                <div className="container">
+                    {MENU_DATA.map((category) => (
+                        <section key={category.id} id={category.id} className="menu-category">
+                            <header className="menu-category__head">
+                                <h2>{category.name}</h2>
+                                <span className="menu-category__count">{category.items.length} dishes</span>
+                            </header>
 
-                        {category.addOns && (
-                            <div style={{ marginTop: '64px', paddingTop: '40px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                                <span className="overline" style={{ color: 'var(--color-primary)', display: 'block', marginBottom: '20px' }}>Add Ons</span>
-                                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px 40px' }}>
+                            <div className="menu-grid">
+                                {category.items.map((item) => (
+                                    <MenuCard
+                                        key={item.number}
+                                        number={item.number}
+                                        title={item.title}
+                                        imageSrc={item.imageSrc}
+                                        price={item.price}
+                                        groupPrice={item.groupPrice}
+                                        portionNote={item.portionNote}
+                                        description={item.description}
+                                        badges={item.badges}
+                                        addOnNote={item.addOnNote}
+                                        angled={item.angled}
+                                    />
+                                ))}
+                            </div>
+
+                            {category.addOns && (
+                                <div className="menu-addons">
+                                    <span className="menu-addons__label">Add ons</span>
                                     {category.addOns.map((addOn) => (
-                                        <div key={addOn.title} style={{ display: 'flex', alignItems: 'baseline', gap: '10px' }}>
-                                            <span style={{ color: 'var(--color-text-primary)', fontSize: '0.95rem' }}>{addOn.title}</span>
-                                            <span style={{ color: 'var(--color-primary)', fontWeight: 600, fontSize: '0.9rem' }}>{addOn.price} BDT</span>
-                                        </div>
+                                        <span key={addOn.title} className="menu-addons__item">
+                                            {addOn.title} <b>{addOn.price} BDT</b>
+                                        </span>
                                     ))}
                                 </div>
-                            </div>
-                        )}
-                    </div>
-                </section>
-            ))}
-        </div>
-
-        {/* Menu terms & legend - sourced from the printed menu's closing page */}
-        <section style={{ backgroundColor: 'var(--color-surface-elevated)', padding: '56px 0', borderTop: '1px solid rgba(255,255,255,0.05)', position: 'relative' }}>
-            <SectionBlend />
-            <div className="container">
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', marginBottom: '32px' }}>
-                    <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.85rem' }}>🌶️ Spicy</span>
-                    <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.85rem' }}>📕 Special</span>
-                    <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.85rem' }}>📷 Featured</span>
-                    <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.85rem' }}>✨ New</span>
+                            )}
+                        </section>
+                    ))}
                 </div>
-                <ul style={{ listStyle: 'none', padding: 0, color: 'var(--color-text-secondary)', fontSize: '0.85rem', lineHeight: 2, maxWidth: '640px' }}>
-                    <li>All prices are inclusive of 5% VAT and applicable SD.</li>
-                    <li>A 5% service charge is applied on the final bill.</li>
-                    <li>All meat served is 100% halal.</li>
-                    <li>All prices are listed in Bangladeshi Taka (BDT).</li>
-                    <li>Please alert your server if you&rsquo;re allergic to any ingredients.</li>
-                </ul>
             </div>
-        </section>
+
+            <section className="section section--tight menu-terms">
+                <div className="container">
+                    <div className="menu-terms__legend">
+                        {LEGEND.map((l) => (
+                            <span key={l.key} className={`menu-badge menu-badge--${l.key}`}>
+                                {l.label}
+                            </span>
+                        ))}
+                    </div>
+                    <ul>
+                        {TERMS.map((t) => (
+                            <li key={t}>{t}</li>
+                        ))}
+                    </ul>
+                </div>
+            </section>
         </>
     );
 }

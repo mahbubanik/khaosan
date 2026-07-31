@@ -1,10 +1,12 @@
-import React from 'react';
-import Image from 'next/image';
-import { Flame, BookOpen, Camera, Sparkles } from 'lucide-react';
+import React from "react";
+import Image from "next/image";
+import { Flame, BookOpen, Camera, Sparkles } from "lucide-react";
 
-export type MenuBadge = 'spicy' | 'special' | 'featured' | 'new';
+export type MenuBadge = "spicy" | "special" | "featured" | "new";
 
 export interface MenuCardProps {
+    /** The dish's number on the printed menu. Kept because guests and staff
+        order by it ("number 24"), so dropping it would break a real habit. */
     number?: number;
     title: string;
     imageSrc: string;
@@ -14,19 +16,28 @@ export interface MenuCardProps {
     description: string;
     badges?: MenuBadge[];
     addOnNote?: string;
-    index?: number;
-    /** Gently rotate a face-on plate (e.g. top-down soups) so it reads as
+    /** Gently rotates a face-on plate (e.g. a top-down soup) so it reads as
         placed on a table rather than staring at the viewer. */
     angled?: boolean;
 }
 
-const BADGE_META: Record<MenuBadge, { label: string; icon: React.ReactNode; color: string }> = {
-    spicy: { label: 'Spicy', icon: <Flame size={12} strokeWidth={3} />, color: '#ff6b4d' },
-    special: { label: 'Special', icon: <BookOpen size={12} strokeWidth={3} />, color: 'var(--color-primary)' },
-    featured: { label: 'Featured', icon: <Camera size={12} strokeWidth={3} />, color: '#e8c874' },
-    new: { label: 'New', icon: <Sparkles size={12} strokeWidth={3} />, color: '#5fc7b8' },
+/** Badge vocabulary lifted from the printed menu's own legend. */
+const BADGE_META: Record<MenuBadge, { label: string; icon: React.ReactNode }> = {
+    spicy: { label: "Spicy", icon: <Flame size={11} strokeWidth={2.75} /> },
+    special: { label: "Special", icon: <BookOpen size={11} strokeWidth={2.75} /> },
+    featured: { label: "Featured", icon: <Camera size={11} strokeWidth={2.75} /> },
+    new: { label: "New", icon: <Sparkles size={11} strokeWidth={2.75} /> },
 };
 
+/**
+ * One dish, as a bounded card.
+ *
+ * The previous version had no container: an image and some text dropped into a
+ * grid with an 8vw column gap and a 120px stagger offset per column. Nothing
+ * grouped a dish with its own price, and a 75-item menu ran for screens. The
+ * card gives each dish a ground, a border and a hover, and puts the title and
+ * price on one baseline row so a column can be scanned straight down.
+ */
 export default function MenuCard({
     number,
     title,
@@ -37,40 +48,38 @@ export default function MenuCard({
     description,
     badges = [],
     addOnNote,
-    index = 0,
     angled = false,
 }: MenuCardProps) {
-    const isEven = index % 2 === 0;
+    /* "MRP" is a value in the source data, not a number - don't append a unit. */
+    const priceLabel = price === "MRP" ? "MRP" : `${price} BDT`;
 
+    /*
+     * Deliberately not scroll-revealed. Fading in 75 cards as the reader
+     * scrolls a catalogue slows scanning rather than adding polish, and it
+     * would make the site's most important content depend on JavaScript
+     * merely to be visible. The cards are simply there.
+     */
     return (
-        <div className={`reveal-hidden menu-card ${isEven ? 'is-even' : 'is-odd'}`} style={{ display: 'flex', flexDirection: 'column', alignItems: 'stretch', textAlign: 'left' }}>
-            <div className={`dish${angled ? ' dish--angled' : ''}`} style={{ position: 'relative', width: '100%', aspectRatio: '1/1', marginBottom: '20px' }}>
-                <Image className="dish-img img-feather" src={imageSrc} alt={title} fill style={{ padding: '8%' }} sizes="(max-width: 768px) 100vw, 33vw" loading="lazy" />
+        <article className="menu-card">
+            <div className="menu-card__media">
+                <div className={`dish${angled ? " dish--angled" : ""}`}>
+                    <Image
+                        className="dish-img"
+                        src={imageSrc}
+                        alt={title}
+                        fill
+                        sizes="(max-width: 640px) 90vw, (max-width: 1080px) 45vw, 280px"
+                        loading="lazy"
+                    />
+                </div>
 
                 {badges.length > 0 && (
-                    <div style={{ position: 'absolute', top: '0', left: '0', display: 'flex', gap: '6px', flexWrap: 'wrap', maxWidth: 'calc(100% - 24px)', zIndex: 3 }}>
+                    <div className="menu-card__badges">
                         {badges.map((b) => (
-                            <span
-                                key={b}
-                                title={BADGE_META[b].label}
-                                style={{
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '4px',
-                                    fontSize: '0.65rem',
-                                    fontWeight: 600,
-                                    letterSpacing: '0.05em',
-                                    textTransform: 'uppercase',
-                                    color: '#fdfbf7',
-                                    backgroundColor: 'rgba(5, 7, 10, 0.72)',
-                                    backdropFilter: 'blur(6px)',
-                                    border: `1px solid ${BADGE_META[b].color}`,
-                                    boxShadow: `0 2px 8px ${BADGE_META[b].color}40`,
-                                    borderRadius: 'var(--radius-pill)',
-                                    padding: '4px 10px',
-                                }}
-                            >
-                                <span aria-hidden="true" style={{ display: 'flex' }}>{BADGE_META[b].icon}</span>
+                            <span key={b} className={`menu-badge menu-badge--${b}`}>
+                                <span aria-hidden="true" style={{ display: "flex" }}>
+                                    {BADGE_META[b].icon}
+                                </span>
                                 {BADGE_META[b].label}
                             </span>
                         ))}
@@ -78,31 +87,24 @@ export default function MenuCard({
                 )}
             </div>
 
-            <div style={{ padding: '0 16px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.35rem', color: 'var(--color-text-primary)', lineHeight: 1.3, marginBottom: '8px' }}>
-                    {number != null && <span style={{ color: 'var(--color-text-secondary)', fontWeight: 400, marginRight: '10px', fontSize: '1rem' }}>{String(number).padStart(2, '0')}</span>}
-                    {title}
-                    {portionNote && <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.85rem', fontWeight: 400, marginLeft: '8px' }}>{portionNote}</span>}
-                </h3>
-
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', marginBottom: '12px', flexWrap: 'wrap' }}>
-                    <span style={{ color: 'var(--color-primary)', fontWeight: 700, fontSize: '1.1rem' }}>{price} BDT</span>
-                    {groupPrice && (
-                        <span style={{ color: 'var(--color-text-secondary)', fontSize: '0.85rem' }}>
-                            · Group {groupPrice} BDT
-                        </span>
-                    )}
+            <div className="menu-card__body">
+                <div className="menu-card__top">
+                    <h3 className="menu-card__title">
+                        {number != null && (
+                            <span className="menu-card__num">{String(number).padStart(2, "0")}</span>
+                        )}
+                        {title}
+                        {portionNote && <span className="menu-card__portion">{portionNote}</span>}
+                    </h3>
+                    <p className="menu-card__price">
+                        {priceLabel}
+                        {groupPrice && <small>{groupPrice} BDT</small>}
+                    </p>
                 </div>
 
-                <p style={{ color: 'var(--color-text-secondary)', fontSize: '0.95rem', lineHeight: 1.7, marginBottom: addOnNote ? '8px' : 0 }}>
-                    {description}
-                </p>
-                {addOnNote && (
-                    <p style={{ color: 'var(--color-primary)', fontSize: '0.85rem', fontStyle: 'italic' }}>
-                        {addOnNote}
-                    </p>
-                )}
+                <p className="menu-card__desc">{description}</p>
+                {addOnNote && <p className="menu-card__addon">{addOnNote}</p>}
             </div>
-        </div>
+        </article>
     );
 }

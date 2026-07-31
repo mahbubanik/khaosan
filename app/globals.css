@@ -1,1329 +1,1506 @@
-@import "tailwindcss";
+/* ============================================================================
+   KHAO SAN
+   Re-inventing The Thai Way
+
+   One stylesheet, no CSS framework. Structured as: tokens -> base -> layout ->
+   type -> controls -> sections -> menu -> pattern -> motion.
+
+   The previous build was an "Editorial Nocturne": near-black surfaces, saffron
+   accents, cream type, and a lot of machinery (film grain, candlelight glow,
+   per-section dark photo washes) whose only job was to stop black reading as
+   flat. This is a rebrand to the client's actual identity - deep blue and
+   orange on white - so that machinery is gone rather than recoloured. What
+   carried over is the craft that still earns its place: the dish lighting, the
+   reveal motion, the opening ritual, the menu rail.
+   ============================================================================ */
 
 :root {
-    --color-primary: #f08b43;
-    --color-secondary: #D76F30; /* Burnt Saffron */
-    --color-accent: #f08b43;
-    --color-surface-base: #090D14;
-    --color-surface-elevated: #101520;
-    --color-surface-alt: #f08b43;
-    --color-text-primary: #E1DCD3;
-    --color-text-secondary: #AFA89D;
-    --color-border: rgba(255, 255, 255, 0.06);
+    /* ── OFFICIAL PALETTE ────────────────────────────────────────────────
+       Taken from the client's own swatch sheet, which prints these hex
+       values: public/assets/Colors-20260709T183545Z-2-001/Colors/.
+       Nothing below is approximated. Every derived value is an explicit
+       color-mix() of these six, so it can always be traced back. */
+    --brand-blue:   #1e417b;
+    --brand-orange: #ff964f;
+    --brand-butter: #f9eb9b;
+    --brand-powder: #cadbe9;
+    --brand-white:  #ffffff;
+    --brand-black:  #161616;
 
-    /* Brand Accent Colors */
-    --color-burnt-saffron: #D76F30;
-    --color-temple-gold: #C59B27;
-    --color-deep-terracotta: #8D361F;
-    --color-warm-clay: #A96F5C;
-    --color-muted-ochre: #B07C30;
+    /* ── SURFACES ────────────────────────────────────────────────────────
+       The brand's own collateral - printed menu, social, packaging - is
+       predominantly light: blue ink and orange accents on white. The site
+       follows it. Deep blue is held back for two anchor sections (gift
+       cards, the closing invitation) plus the hero and footer, which gives
+       the page rhythm and keeps the drama without an all-dark theme. */
+    --surface-page: var(--brand-white);
+    --surface-tint: color-mix(in srgb, var(--brand-powder) 34%, var(--brand-white));
+    /* Warm ground. Orange rather than butter, so the light sections carry the
+       brand's heat instead of reading as plain paper. */
+    --surface-sand: color-mix(in srgb, var(--brand-orange) 15%, var(--brand-white));
+    --surface-deep: var(--brand-blue);
+    /* Full-strength orange, used as an actual surface. This is the client's
+       own signature pairing - their mark sits in blue on exactly this orange -
+       so a whole section in it reads as more on-brand than any amount of white
+       with orange trim. Blue on it measures 4.63:1 and near-black 8.38:1. */
+    --surface-warm: var(--brand-orange);
 
+    /* ── INK ─────────────────────────────────────────────────────────────
+       These are contrast facts, not preferences. Brand orange on white is
+       2.16:1 and fails text contrast at every size, so on light surfaces
+       orange is a FILL and a MARK only - buttons, rules, dots, pills -
+       never small text. Measured ratios:
+         blue   on white  10.0:1  AAA  headings, links, overlines
+         black  on white  18.1:1  AAA  body
+         blue   on orange  4.6:1  AA   primary button label
+         white  on blue   10.0:1  AAA  text on anchor sections
+         powder on blue    7.1:1  AAA  secondary text on anchor sections
+         orange on blue    4.6:1  AA   accent text on anchor sections only */
+    --text-primary:      var(--brand-black);
+    --text-secondary:    color-mix(in srgb, var(--brand-black) 68%, var(--brand-white));
+    --text-heading:      var(--brand-blue);
+    --text-on-deep:      var(--brand-white);
+    --text-on-deep-soft: var(--brand-powder);
+
+    --border-soft:    color-mix(in srgb, var(--brand-blue) 14%, transparent);
+    --border-strong:  color-mix(in srgb, var(--brand-blue) 28%, transparent);
+    --border-on-deep: color-mix(in srgb, var(--brand-white) 22%, transparent);
+
+    /* ── TYPE ────────────────────────────────────────────────────────────
+       Components read these tokens, never a font name. Camera Obscura
+       carries no digits by design (the supplied demo build watermarks
+       them - see app/fonts/README.md), so they fall through to the serif
+       companion automatically. */
+    --font-display: var(--ff-camera), var(--ff-serif), Georgia, "Times New Roman", serif;
+    --font-script:  var(--ff-brush), var(--ff-serif), cursive;
+    /* Calligraphic italic, for short editorial asides only. */
+    --font-accent:  var(--ff-bellavoir), var(--ff-serif), Georgia, serif;
+    --font-sans:    var(--ff-sans), system-ui, -apple-system, sans-serif;
+
+    /* ── SPACE ───────────────────────────────────────────────────────────
+       One vertical rhythm. Section padding is fluid so the page breathes
+       the same amount proportionally at every width. */
     --space-micro: 8px;
-    --space-component: 24px;
-    --space-layout: 48px;
-    --space-macro: 120px;
+    --space-xs: 16px;
+    --space-sm: 24px;
+    --space-md: 40px;
+    --space-lg: 64px;
+    --space-section: clamp(72px, 9vw, 128px);
+    --gutter: max(6vw, 20px);
+    --measure: 62ch;
 
-    --font-display: var(--font-playfair-display), serif;
-    --font-sans: var(--font-montserrat), sans-serif;
-    --font-heading: var(--font-playfair-display), serif;
-    --font-body: var(--font-playfair-display), serif;
-
-    /* Unified corner-radius system - one language across buttons, cards,
-       media, inputs, and modals instead of mixed ad-hoc values. */
     --radius-sm: 8px;
     --radius-md: 14px;
     --radius-lg: 22px;
     --radius-pill: 9999px;
-    --shadow-float: 0 24px 48px rgba(0, 0, 0, 0.5);
 
-    /* Hero-only text shadow - never used outside a hero. */
-    --hero-text-shadow: 0 4px 20px rgba(0, 0, 0, 0.55), 0 1px 4px rgba(0, 0, 0, 0.35);
-}
+    /* Elevation is tinted with brand blue. A neutral black drop shadow on a
+       white page reads as dirt; a blue-tinted one reads as considered. */
+    --shadow-sm:    0 2px 8px color-mix(in srgb, var(--brand-blue) 10%, transparent);
+    --shadow-md:    0 10px 28px color-mix(in srgb, var(--brand-blue) 14%, transparent);
+    --shadow-lg:    0 20px 44px color-mix(in srgb, var(--brand-blue) 18%, transparent);
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+    /* For type sitting over photography or video only - never on a flat
+       surface, where it just looks smudged. */
+    --shadow-text: 0 2px 18px rgba(0, 0, 0, 0.5), 0 1px 4px rgba(0, 0, 0, 0.35);
 
-.party-size-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 8px;
-}
-@media (max-width: 420px) {
-    .party-size-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
+    --header-h: 84px;
 }
 
-.btn-spinner {
-    display: inline-block;
-    width: 16px;
-    height: 16px;
-    border: 2px solid rgba(5, 7, 10, 0.3);
-    border-top-color: #05070A;
-    border-radius: 50%;
-    animation: btnSpin 0.7s linear infinite;
-}
-@keyframes btnSpin {
-    to { transform: rotate(360deg); }
-}
-@media (prefers-reduced-motion: reduce) {
-    .btn-spinner { animation-duration: 1.4s; }
-}
+/* ============================================================================
+   BASE
+   ============================================================================ */
 
-/*
- * Clip horizontal overflow at the root. Off-canvas surfaces (mobile nav,
- * reservation drawer) and full-bleed 100vw sections would otherwise inflate
- * the initial containing block and create a phantom horizontal scroll on
- * narrow viewports. `clip` (not `hidden`) is used so the menu page's
- * position: sticky category bar keeps working.
- */
+*, *::before, *::after { box-sizing: border-box; }
+* { margin: 0; padding: 0; }
+
+/* `clip` rather than `hidden` so the menu page's sticky category bar keeps
+   working; full-bleed sections would otherwise create a phantom h-scroll. */
 html {
     overflow-x: clip;
+    scroll-behavior: smooth;
+    /* Anchored sections must clear the fixed header. */
+    scroll-padding-top: calc(var(--header-h) + 16px);
+    -webkit-text-size-adjust: 100%;
 }
 
 body {
-    background-color: var(--color-surface-base);
-    color: var(--color-text-primary);
+    background-color: var(--surface-page);
+    color: var(--text-primary);
     font-family: var(--font-sans);
+    font-size: 1rem;
     line-height: 1.7;
-    overflow-x: clip;
     font-weight: 400;
-    position: relative;
+    overflow-x: clip;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
-/* System UI Overrides */
+img, video, svg { max-width: 100%; display: block; }
+a { color: inherit; }
+
 ::selection {
-    background-color: var(--color-primary);
-    color: #0a0c14;
+    background-color: var(--brand-orange);
+    color: var(--brand-blue);
 }
-::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
-}
-::-webkit-scrollbar-track {
-    background: #05070a;
-}
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--surface-tint); }
 ::-webkit-scrollbar-thumb {
-    background: #151a28;
+    background: color-mix(in srgb, var(--brand-blue) 32%, var(--surface-tint));
     border-radius: 4px;
-    border: 2px solid #05070a;
+    border: 2px solid var(--surface-tint);
 }
-::-webkit-scrollbar-thumb:hover {
-    background: var(--color-primary);
+::-webkit-scrollbar-thumb:hover { background: var(--brand-blue); }
+
+/* A solid brand ring plus an offset, so the indicator stays visible on white,
+   on tint, and on deep blue alike. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+    outline: 2px solid var(--brand-blue);
+    outline-offset: 3px;
+    border-radius: 3px;
 }
+.on-deep a:focus-visible,
+.on-deep button:focus-visible { outline-color: var(--brand-orange); }
 
-/* Ambient Candlelight Glow - fixes the 'flat void' problem */
-body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: -1;
-    background: 
-        radial-gradient(circle at 15% 20%, rgba(240, 139, 67, 0.035) 0%, rgba(240, 139, 67, 0) 50%),
-        radial-gradient(circle at 85% 80%, rgba(14, 20, 34, 0.25) 0%, rgba(14, 20, 34, 0) 50%);
-}
-
-/* Film Grain Texture (Atmosphere) */
-body::after {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: 9999;
-    pointer-events: none;
-    opacity: 0.03;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-}
-
-
-/* Global Typography Depth (High Readability) */
-h1, h2, h3, h4, h5, h6 {
-    text-shadow: 0 4px 16px rgba(0,0,0,0.9), 0 1px 3px rgba(0,0,0,0.9);
-}
-p, span, li, a {
-    text-shadow: 0 1px 4px rgba(0,0,0,0.8);
-}
-
-
+/* ============================================================================
+   LAYOUT
+   ============================================================================ */
 
 .container {
-    max-width: 1280px;
+    width: 100%;
+    max-width: 1200px;
     margin: 0 auto;
-    padding: 0 max(8vw, 24px);
+    padding-inline: var(--gutter);
 }
+
+.section {
+    position: relative;
+    padding-block: var(--space-section);
+    overflow: hidden;
+}
+.section--tight { padding-block: clamp(56px, 7vw, 96px); }
+
+.surface-sand { background-color: var(--surface-sand); }
+.surface-deep { background-color: var(--surface-deep); }
+.surface-warm { background-color: var(--surface-warm); }
+
+/* On full orange everything runs in brand blue - headings, body, rules. That
+   is the identity's own lockup rather than an inversion invented here. */
+.on-warm,
+.on-warm p,
+.on-warm li,
+.on-warm address { color: color-mix(in srgb, var(--brand-blue) 88%, var(--brand-black)); }
+.on-warm h1, .on-warm h2, .on-warm h3,
+.on-warm .display-2,
+.on-warm .overline { color: var(--brand-blue); }
+/* Buttons on orange must not be orange. Solid blue with white type is the
+   only pairing that holds up here (10:1). */
+.on-warm .btn-primary {
+    background-color: var(--brand-blue);
+    border-color: var(--brand-blue);
+    color: var(--brand-white);
+}
+.on-warm .btn-primary:hover,
+.on-warm .btn-primary:focus-visible {
+    background-color: var(--brand-white);
+    border-color: var(--brand-white);
+    color: var(--brand-blue);
+}
+.on-warm .btn-secondary { color: var(--brand-blue); border-color: var(--brand-blue); }
+.on-warm .btn-secondary:hover,
+.on-warm .btn-secondary:focus-visible {
+    background-color: var(--brand-blue);
+    color: var(--brand-white);
+}
+
+/* Section headers set the entry rhythm: overline, heading, optional lede.
+   Consistent everywhere so each chapter opens the same way. */
+.section-head {
+    max-width: 62ch;
+    margin-bottom: var(--space-lg);
+}
+.section-head h2,
+.section-head .display-2 { max-width: 20ch; }
+/* Opt-in for short headlines that should hold a single line. */
+.section-head .section-head__title--wide { max-width: 30ch; }
+.section-head--center h2,
+.section-head--center .display-2 { max-width: none; }
+.section-head--center {
+    margin-inline: auto;
+    text-align: center;
+}
+.section-head--center .section-head__lede { margin-inline: auto; }
+.section-head__lede {
+    max-width: 52ch;
+    margin-top: var(--space-sm);
+    color: var(--text-secondary);
+    font-size: 1.05rem;
+    line-height: 1.75;
+    text-wrap: pretty;
+}
+.on-deep .section-head__lede { color: var(--text-on-deep-soft); }
+
+/* ============================================================================
+   TYPE
+   ============================================================================ */
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+    color: var(--text-heading);
+    font-weight: 700;
+    line-height: 1.14;
+    letter-spacing: -0.01em;
+    text-wrap: balance;
+}
+
+.display-2 {
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 4.2vw, 3.4rem);
+    line-height: 1.1;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text-heading);
+    text-wrap: balance;
+}
+
+/* The overline is the brand's structural label - small, wide-tracked, above
+   every section heading. Blue on light (10:1); it flips to orange on deep
+   blue, where orange finally clears AA. */
+/* The overline is the brand's structural label. It leads with a short orange
+   rule - orange can't carry small text on white (2.16:1), but as a MARK it
+   works everywhere, so the accent colour is present on every section opener
+   without ever being asked to be legible. */
+.overline {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--font-sans);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    color: var(--brand-blue);
+    margin-bottom: var(--space-xs);
+}
+.overline::before {
+    content: "";
+    width: 28px;
+    height: 3px;
+    border-radius: 3px;
+    background: var(--brand-orange);
+    flex-shrink: 0;
+}
+.section-head--center .overline,
+.contact__inner .overline,
+.menu-hero__inner .overline { justify-content: center; }
+.on-deep .overline { color: var(--brand-orange); }
+.on-deep .overline::before { background: var(--brand-orange); }
+.on-warm .overline::before { background: var(--brand-blue); }
+
+/* The brush accent. Good Brush 9 is an all-caps face with real energy, so it
+   is rationed: one phrase per section at most, never a sentence, never body
+   copy. It carries the brand's voice ("The Thai Way"), not information. */
+.script-accent {
+    font-family: var(--font-script);
+    font-weight: 400;
+    line-height: 1;
+    letter-spacing: 0.01em;
+    color: var(--brand-orange);
+}
+
+/* Inside a deep-blue section, type inverts as a group so no single element
+   has to remember which surface it is sitting on. */
+.on-deep { color: var(--text-on-deep-soft); }
+.on-deep p, .on-deep li, .on-deep address { color: var(--text-on-deep-soft); }
+.on-deep h1, .on-deep h2, .on-deep h3,
+.on-deep h4, .on-deep h5, .on-deep h6,
+.on-deep .display-2 { color: var(--text-on-deep); }
+
+
+/* ============================================================================
+   CONTROLS
+   ============================================================================ */
 
 .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 16px 36px;
-    border-radius: var(--radius-md);
+    gap: 8px;
+    padding: 15px 32px;
+    border-radius: var(--radius-pill);
     text-decoration: none;
-    font-weight: 600;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    transition: all 400ms cubic-bezier(0.25, 1, 0.5, 1);
-    font-size: 0.85rem;
     font-family: var(--font-sans);
-    cursor: pointer;
-}
-.btn-primary {
-    background-color: var(--color-primary);
-    color: #ffffff;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
-    border: 1px solid var(--color-primary);
-    box-shadow: 0 8px 22px rgba(240, 139, 67, 0.32);
+    font-size: 0.78rem;
     font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    transition: background-color 0.3s var(--ease), color 0.3s var(--ease),
+                border-color 0.3s var(--ease), transform 0.3s var(--ease),
+                box-shadow 0.3s var(--ease);
 }
-.btn-primary:hover, .btn-primary:focus-visible {
-    background-color: #ffab5e;
-    border-color: #ffab5e;
+.btn--sm { padding: 11px 22px; font-size: 0.72rem; }
+
+/* Primary: solid orange with a brand blue label. This is the client's own
+   pairing - their mark sits in blue on orange across the identity - and it
+   measures 4.63:1, passing AA. Deliberately not white-on-orange, which is
+   2.16:1 and fails outright. */
+.btn-primary {
+    background-color: var(--brand-orange);
+    border-color: var(--brand-orange);
+    color: var(--brand-blue);
+    box-shadow: var(--shadow-sm);
+}
+.btn-primary:hover,
+.btn-primary:focus-visible {
+    background-color: var(--brand-blue);
+    border-color: var(--brand-blue);
+    color: var(--brand-white);
     transform: translateY(-2px);
-    box-shadow: 0 18px 38px rgba(240, 139, 67, 0.5);
-    color: #ffffff;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    box-shadow: var(--shadow-md);
 }
-.btn-primary:active {
-    transform: translateY(0) scale(0.97);
-    box-shadow: 0 4px 12px rgba(240, 139, 67, 0.32);
-}
-/* Outlined cream button - high contrast on any dark or warm surface, and it
-   inverts to a solid cream fill on hover so the label never loses legibility.
-   Deliberately not orange, to avoid orange-on-orange against warm sections. */
+.btn-primary:active { transform: translateY(0) scale(0.98); box-shadow: var(--shadow-sm); }
+
+/* Secondary: outlined, inverting to a solid fill on hover so the label never
+   loses contrast mid-transition. */
 .btn-secondary {
     background-color: transparent;
-    color: var(--color-text-primary);
-    border: 1.5px solid rgba(253, 251, 247, 0.5);
+    border-color: var(--border-strong);
+    color: var(--brand-blue);
 }
-.btn-secondary:hover, .btn-secondary:focus-visible {
-    background-color: var(--color-text-primary);
-    color: #0a0c14 !important;
-    border-color: var(--color-text-primary);
+.btn-secondary:hover,
+.btn-secondary:focus-visible {
+    background-color: var(--brand-blue);
+    border-color: var(--brand-blue);
+    color: var(--brand-white);
     transform: translateY(-2px);
-    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.4);
+    box-shadow: var(--shadow-md);
 }
-.btn-secondary:active {
-    transform: translateY(0) scale(0.97);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+.btn-secondary:active { transform: translateY(0) scale(0.98); }
+
+/* Over photography and on deep blue the outline flips to white. Same shape,
+   same motion - only the ink changes. */
+.btn-secondary--on-deep,
+.on-deep .btn-secondary {
+    color: var(--brand-white);
+    border-color: var(--border-on-deep);
+}
+.btn-secondary--on-deep:hover,
+.btn-secondary--on-deep:focus-visible,
+.on-deep .btn-secondary:hover,
+.on-deep .btn-secondary:focus-visible {
+    background-color: var(--brand-white);
+    border-color: var(--brand-white);
+    color: var(--brand-blue);
 }
 
-/* Hero Section */
-.hero {
-    padding-top: calc(var(--space-macro) + 96px);
-    padding-bottom: var(--space-macro);
+/* ============================================================================
+   HEADER
+   Fixed, centred mark with the nav split either side - kept from the previous
+   build, which got this right. At the top of a page it floats transparent over
+   the hero in white; once scrolled it settles onto a white bar with blue ink.
+   ============================================================================ */
+
+.site-header {
+    position: fixed;
+    inset: 0 0 auto 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: 18px var(--gutter);
+    transition: background-color 0.4s var(--ease), padding 0.4s var(--ease),
+                box-shadow 0.4s var(--ease), border-color 0.4s var(--ease);
+    border-bottom: 1px solid transparent;
+}
+.site-header.is-solid {
+    padding-block: 10px;
+    background-color: color-mix(in srgb, var(--brand-white) 92%, transparent);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom-color: var(--border-soft);
+    box-shadow: var(--shadow-sm);
+}
+
+/* The room arrives once the ember at the mark has bloomed - see .ignition-*. */
+html[data-ignition="igniting"] .site-header {
+    opacity: 0;
+    animation: headerArrive 0.7s var(--ease) 1.05s forwards;
+}
+@keyframes headerArrive {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.site-header__nav {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: clamp(16px, 3vw, 44px);
+}
+.site-header__group {
+    display: flex;
+    align-items: center;
+    gap: clamp(16px, 2.4vw, 36px);
+    list-style: none;
+}
+.site-header__group--left  { justify-content: flex-end; }
+.site-header__group--right { justify-content: flex-start; }
+
+.site-header__mark {
     position: relative;
-    overflow: hidden;
+    display: block;
+    width: 64px;
+    height: 56px;
+    flex-shrink: 0;
+    transition: width 0.4s var(--ease), height 0.4s var(--ease), filter 0.4s var(--ease);
+    /* The mark is solid brand blue, which would vanish against the hero
+       video. Over the hero it is knocked out to white; on the scrolled white
+       bar it returns to its true colour. */
+    filter: brightness(0) invert(1);
+}
+.is-solid .site-header__mark {
+    width: 50px;
+    height: 44px;
+    filter: none;
 }
 
-.hero-overlay {
+.nav-link {
+    position: relative;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--brand-white);
+    white-space: nowrap;
+    padding-block: 6px;
+    transition: color 0.3s var(--ease);
+}
+.is-solid .nav-link { color: var(--brand-blue); }
+
+/* The active section is marked with an orange rule that grows from the centre
+   - the same mark used on hover, so the two states are one language. */
+.nav-link::after {
+    content: "";
     position: absolute;
-    top: 0;
+    left: 50%;
+    bottom: 0;
+    width: 0;
+    height: 2px;
+    background: var(--brand-orange);
+    border-radius: 2px;
+    transform: translateX(-50%);
+    transition: width 0.3s var(--ease);
+}
+.nav-link:hover::after,
+.nav-link[aria-current]::after { width: 100%; }
+
+.site-header__cta { flex-shrink: 0; }
+
+/* ── Mobile ─────────────────────────────────────────────────────────────── */
+
+.nav-toggle {
+    display: none;
+    width: 44px;
+    height: 44px;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    cursor: pointer;
+    z-index: 102;
+}
+.nav-toggle__bars {
+    position: relative;
+    display: block;
+    width: 24px;
+    height: 14px;
+}
+.nav-toggle__bars span {
+    position: absolute;
     left: 0;
     width: 100%;
-    height: 100%;
-    background: linear-gradient(135deg, rgba(5, 7, 10, 0.55) 0%, rgba(5, 7, 10, 0.65) 100%);
-    z-index: 1;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--brand-white);
+    transition: transform 0.3s var(--ease), background-color 0.3s var(--ease);
+}
+.nav-toggle__bars span:first-child { top: 0; }
+.nav-toggle__bars span:last-child  { bottom: 0; }
+.is-solid .nav-toggle__bars span { background: var(--brand-blue); }
+.nav-toggle__bars.is-open span { background: var(--brand-white); }
+.nav-toggle__bars.is-open span:first-child { transform: translateY(6px) rotate(45deg); }
+.nav-toggle__bars.is-open span:last-child  { transform: translateY(-6px) rotate(-45deg); }
+
+.mobile-nav {
+    position: fixed;
+    inset: 0;
+    z-index: 101;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-md);
+    background-color: var(--brand-blue);
+    /* Slides via transform, never via `right`, so the panel is never
+       positioned off-screen in layout - that inflated the containing block
+       and produced a phantom horizontal scroll on narrow viewports. */
+    transform: translateX(100%);
+    transition: transform 0.42s var(--ease);
+    visibility: hidden;
+}
+.mobile-nav.is-open { transform: translateX(0); visibility: visible; }
+.mobile-nav ul {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-sm);
+}
+/* Scoped to the list, not to every anchor in the panel. Unscoped, this also
+   captured the Contact Us button - overriding its label to white on orange
+   (2.16:1) and blowing it up to 1.6rem. */
+.mobile-nav ul a {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--brand-white);
+    text-decoration: none;
+    padding: 6px 12px;
+}
+.mobile-nav ul a[aria-current] { color: var(--brand-orange); }
+.mobile-nav .btn { margin-top: var(--space-xs); }
+
+@media (max-width: 1080px) {
+    .site-header__nav,
+    .site-header__cta { display: none; }
+    .nav-toggle { display: flex; }
+    .site-header {
+        justify-content: space-between;
+        padding-block: 12px;
+    }
+    /* With the split nav collapsed, the mark moves to the leading edge and
+       becomes the only thing in the bar besides the toggle. */
+    .site-header::before {
+        content: "";
+        display: block;
+        width: 44px;
+    }
 }
 
-/* Cinematic hero lighting: a vignette that darkens the edges and a soft
-   warm directional glow, so the copy reads as the lit focal point over
-   video/photo - editorial-photography lighting, not a flat scrim. Hero-only. */
-/* Cinematic hero lighting - a single layered composition that darkens the
-   frame edges, keeps the top readable under the nav, pulls the sides in, and
-   lifts a warm key light behind the headline so the eye lands on the type.
-   This is the HOMEPAGE HERO's signature treatment only - do not reuse it on
-   other media (see the brief: hero lighting is unique). */
-.hero-cinematic-light {
+/* ============================================================================
+   HERO
+   ============================================================================ */
+
+.hero {
+    position: relative;
+    min-height: 100svh;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    background-color: var(--brand-blue);
+    padding-block: calc(var(--header-h) + 40px) var(--space-lg);
+}
+/*
+ * Hero lighting.
+ *
+ * v1 hid the footage at 50% opacity. v2 ran it at full strength with local
+ * scrims. v3 added a flat full-frame blue veil, which killed the depth - the
+ * whole frame went evenly blue and the room stopped reading.
+ *
+ * This restores the original build's technique, in brand colour: a cinematic
+ * vignette rather than a wash. Corners and edges fall into shadow, the centre
+ * stays open, and a warm key light lifts the type off the picture. Nothing
+ * covers the whole frame, so the footage keeps its contrast and the middle of
+ * the room stays visible - which is what makes it feel lit rather than tinted.
+ */
+.hero__video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+    /* The clip is 9:16; a landscape hero only shows a band of it. Biasing up
+       puts the restaurant's own illuminated sign in frame. */
+    object-position: 50% 30%;
+    filter: saturate(0.88);
+}
+.hero__scrim {
     position: absolute;
     inset: 0;
     z-index: 1;
     pointer-events: none;
     background:
-        radial-gradient(ellipse 52% 46% at 50% 44%, rgba(255, 193, 133, 0.22) 0%, rgba(255, 193, 133, 0) 62%),
-        linear-gradient(to bottom, rgba(5, 7, 10, 0.72) 0%, rgba(5, 7, 10, 0) 24%),
-        linear-gradient(to top, rgba(5, 7, 10, 0.96) 0%, rgba(5, 7, 10, 0) 42%),
-        linear-gradient(to right, rgba(5, 7, 10, 0.62) 0%, rgba(5, 7, 10, 0) 28%),
-        linear-gradient(to left, rgba(5, 7, 10, 0.62) 0%, rgba(5, 7, 10, 0) 28%),
-        radial-gradient(circle at 100% 0%, rgba(5, 7, 10, 0.8) 0%, rgba(5, 7, 10, 0) 35%),
-        radial-gradient(circle at 0% 100%, rgba(5, 7, 10, 0.8) 0%, rgba(5, 7, 10, 0) 35%);
+        /* warm key light behind the headline */
+        radial-gradient(ellipse 52% 46% at 50% 46%,
+            color-mix(in srgb, var(--brand-orange) 20%, transparent) 0%,
+            transparent 62%),
+        /* top edge, so the nav always has ground */
+        linear-gradient(to bottom, color-mix(in srgb, var(--brand-blue) 74%, transparent) 0%, transparent 24%),
+        /* floor, handing off to the section below */
+        linear-gradient(to top, color-mix(in srgb, var(--brand-blue) 94%, transparent) 0%, transparent 42%),
+        /* sides pulled in */
+        linear-gradient(to right, color-mix(in srgb, var(--brand-blue) 66%, transparent) 0%, transparent 28%),
+        linear-gradient(to left,  color-mix(in srgb, var(--brand-blue) 66%, transparent) 0%, transparent 28%),
+        /* opposite corners dropped into shadow */
+        radial-gradient(circle at 100% 0%, color-mix(in srgb, var(--brand-blue) 82%, transparent) 0%, transparent 35%),
+        radial-gradient(circle at 0% 100%, color-mix(in srgb, var(--brand-blue) 82%, transparent) 0%, transparent 35%);
 }
-.hero-text-shadow {
-    text-shadow: var(--hero-text-shadow);
+.hero__inner {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    max-width: 900px;
+}
+.hero__eyebrow {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.34em;
+    text-transform: uppercase;
+    color: var(--brand-powder);
+    margin-bottom: var(--space-sm);
+    text-shadow: var(--shadow-text);
+}
+/* The hero lockup mirrors the brand's own: a display line above a brush line,
+   exactly as the gift cards and menu cover set it. */
+.hero__title {
+    font-family: var(--font-display);
+    font-size: clamp(2.5rem, 7vw, 5rem);
+    line-height: 1.02;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--brand-white);
+    text-shadow: var(--shadow-text);
+    margin-bottom: var(--space-sm);
+}
+.hero__script {
+    display: block;
+    font-size: clamp(3.4rem, 11vw, 8rem);
+    margin-top: 0.08em;
+    /* Butter reads warmer than pure orange against the blue scrim and holds
+       8.3:1, so the biggest words on the site are also the most legible. */
+    color: var(--brand-butter);
+}
+.hero__lede {
+    max-width: 46ch;
+    margin: 0 auto var(--space-md);
+    font-size: clamp(1rem, 1.6vw, 1.15rem);
+    color: var(--brand-powder);
+    text-shadow: var(--shadow-text);
+}
+.hero__actions {
+    display: flex;
+    gap: var(--space-xs);
+    justify-content: center;
+    flex-wrap: wrap;
+}
+.hero__cue {
+    position: absolute;
+    left: 50%;
+    bottom: 28px;
+    transform: translateX(-50%);
+    z-index: 2;
 }
 
-/* Subtle cinematic drift on the homepage hero footage - barely perceptible. */
+/* A barely-perceptible drift on the hero footage, so a looping clip never
+   reads as a frozen still. Paused under reduced motion. */
 @keyframes heroKenBurns {
-    0% { transform: scale(1); }
-    100% { transform: scale(1.08); }
+    from { transform: scale(1); }
+    to   { transform: scale(1.08); }
 }
-.hero-ken-burns {
-    animation: heroKenBurns 22s ease-in-out infinite alternate;
-}
+.hero-ken-burns { animation: heroKenBurns 24s ease-in-out infinite alternate; }
 @media (prefers-reduced-motion: reduce) {
     .hero-ken-burns { animation: none; }
 }
 
-/*
- * The Ignition - the opening ritual (homepage, first visit per session only).
- * A single ember catches at the flagship's mark and blooms into the room.
- * Entirely gated behind [data-ignition="igniting"], which app/layout.tsx's
- * inline head script only ever sets when JS confirms reduced-motion is off -
- * so nothing here needs its own reduced-motion guard.
- */
-.ignition-veil {
-    display: none;
-    position: fixed;
-    inset: 0;
-    z-index: 300;
-    background: var(--color-surface-base);
-    pointer-events: none;
-}
-html[data-ignition="igniting"] .ignition-veil {
-    display: block;
-    animation: ignitionVeilRecede 1.0s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-.ignition-logo-container {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    opacity: 0;
-    will-change: opacity;
-}
-.ignition-logo-wipe {
-    filter: drop-shadow(0 0 24px rgba(240, 139, 67, 0.5)) brightness(1.2) sepia(1) hue-rotate(345deg) saturate(3);
-}
-html[data-ignition="igniting"] .ignition-logo-container {
-    animation: ignitionLogoFade 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.1s forwards;
-}
-html[data-ignition="igniting"] .ignition-logo-wipe {
-    animation: ignitionWipe 0.5s cubic-bezier(0.7, 0, 0.3, 1) 0.1s forwards;
+/* ============================================================================
+   EDITORIAL - a media/copy two-up, alternating sides down the About section.
+   ============================================================================ */
+
+.editorial {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    align-items: center;
+    gap: clamp(28px, 5vw, 72px);
+    margin-top: var(--space-lg);
 }
 
-@keyframes ignitionLogoFade {
-    0%, 60% { opacity: 1; }
-    100%    { opacity: 0; }
-}
-@keyframes ignitionWipe {
-    0%   { clip-path: inset(0 100% 0 0); }
-    100% { clip-path: inset(0 0 0 0); }
-}
-@keyframes ignitionVeilRecede {
-    0%, 50%  { opacity: 1; }
-    100%     { opacity: 0; visibility: hidden; }
-}
-
-/* Hero copy arrives with the light, not before it. Fully visible by default -
-   the staggered entrance only happens during the ignition sequence itself. */
-html[data-ignition="igniting"] .ignition-reveal {
-    opacity: 0;
-    transform: translateY(14px);
-    animation: ignitionRevealIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-html[data-ignition="igniting"] .ignition-reveal-1 { animation-delay: 0.4s; }
-html[data-ignition="igniting"] .ignition-reveal-2 { animation-delay: 0.5s; }
-html[data-ignition="igniting"] .ignition-reveal-3 { animation-delay: 0.6s; }
-html[data-ignition="igniting"] .ignition-reveal-4 { animation-delay: 0.7s; }
-@keyframes ignitionRevealIn {
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.display-1 {
-    font-family: var(--font-display);
-    font-size: clamp(3.5rem, 8vw, 7.5rem);
-    line-height: 1.05;
-    font-weight: 700;
-    color: var(--color-primary);
-    margin-bottom: var(--space-component);
-    letter-spacing: -0.04em;
-    /* Balance multi-line headings so a lone word never dangles on its own
-       line - every display heading reads as an intentionally composed block. */
-    text-wrap: balance;
-}
-.body-large {
-    font-size: 1rem;
-    line-height: 1.8;
-    max-width: 48ch;
-    margin-bottom: var(--space-layout);
-    color: rgba(253, 251, 247, 0.75);
-}
-
-/* Accessibility Focus States */
-a:focus-visible,
-button:focus-visible,
-input:focus-visible,
-textarea:focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(240, 139, 67, 0.4), 0 0 12px rgba(240, 139, 67, 0.8);
-    border-radius: 4px;
-}
-
-/* Typography Classes */
-.display-2 {
-    font-family: var(--font-display);
-    font-size: clamp(2.5rem, 5vw, 4.5rem);
-    line-height: 1.1;
-    font-weight: 600;
-    color: var(--color-primary);
-    margin-bottom: var(--space-component);
-    letter-spacing: -0.02em;
-    text-wrap: balance;
-}
-
-/* Opt-in pretty-wrap for body copy and longer paragraphs: avoids typographic
-   orphans (a single short word on the last line) without the tighter
-   line-count balancing that suits headings. */
-.text-balance { text-wrap: balance; }
-.text-pretty { text-wrap: pretty; }
-.overline {
-    font-family: var(--font-sans);
-    font-size: 0.85rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.25em;
-    color: var(--color-accent);
-    display: block;
-    margin-bottom: var(--space-micro);
-}
-
-.pattern-overlay {
-    position: relative;
-    z-index: 1;
-}
-.pattern-overlay::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
+.editorial__video {
     width: 100%;
     height: 100%;
-    background-image: url('/assets/Background-20260709T183540Z-2-001/Background/Lotus/Lotus Single White.svg');
-    background-size: 150px;
-    background-repeat: repeat;
-    opacity: 0.04;
-    z-index: -1;
-    pointer-events: none;
+    object-fit: cover;
+    /* Vertical footage in a landscape frame - centred, the crop line fell
+       between two stacked shots and showed a hard seam. */
+    object-position: 50% 38%;
 }
-
-/* Phase 14: Global Micro-interactions */
-.page-transition {
-    animation: fadeUpIn 0.8s cubic-bezier(0.25, 1, 0.5, 1) forwards;
-}
-@keyframes fadeUpIn {
-    0% {
-        opacity: 0;
-        transform: translateY(16px);
-    }
-    100% {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-/* Scroll cue: a small ember drifting upward and fading, looping - carries
-   the fire motif established by the ignition sequence into ordinary use. */
-.ember-drift-track {
+.editorial__media {
     position: relative;
-    width: 1px;
-    height: 40px;
-    margin: 0 auto;
-    background: rgba(240, 139, 67, 0.15);
-    overflow: visible;
+    aspect-ratio: 16 / 10;
+    /* No border-radius, no overflow clip and no box-shadow: the feather mask
+       below dissolves all four edges instead, so the media melts into the
+       surface rather than sitting on it as a card. */
 }
-.ember-drift-dot {
-    position: absolute;
-    left: 50%;
-    bottom: 0;
-    width: 4px;
-    height: 4px;
-    border-radius: 50%;
-    background: var(--color-primary);
-    box-shadow: 0 0 6px 2px rgba(240, 139, 67, 0.6);
-    transform: translate(-50%, 0);
-    animation: emberDrift 2.4s ease-in-out infinite;
+.editorial__copy h3 {
+    font-size: clamp(1.5rem, 2.6vw, 2.1rem);
+    margin-bottom: var(--space-xs);
 }
-@keyframes emberDrift {
-    0%   { transform: translate(-50%, 0); opacity: 0; }
-    18%  { opacity: 1; }
-    82%  { opacity: 0.15; }
-    100% { transform: translate(-50%, -40px); opacity: 0; }
+.editorial__copy p {
+    color: var(--text-secondary);
+    margin-bottom: var(--space-sm);
+    text-wrap: pretty;
 }
 
-/* Subpage Layouts */
-.page-hero {
-    padding-top: calc(var(--space-macro) + 96px);
-    padding-bottom: var(--space-layout);
-    text-align: center;
-}
-.menu-category {
-    padding-top: var(--space-layout);
-    padding-bottom: var(--space-macro);
-    background-color: var(--color-surface-base);
+@media (max-width: 900px) {
+    .editorial { grid-template-columns: 1fr; gap: var(--space-sm); }
 }
 
-/* Phase 14: Premium Reservation Form Styles */
-.premium-form {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-micro);
-    width: 100%;
-}
+/* ============================================================================
+   GALLERY - the three rooms as a curated mosaic at three different scales, so
+   the wall reads as art-directed rather than tiled.
+   ============================================================================ */
 
-.premium-input {
-    width: 100%;
-    padding: 16px 0;
-    background: transparent;
-    border: none;
-    border-bottom: 1px solid var(--color-border);
-    color: var(--color-text-primary);
-    font-family: var(--font-sans);
-    font-size: 1rem;
-    transition: all 0.3s ease;
-    border-radius: 0;
+/* Three rooms at three different scales - a wide feature and two narrower
+   portraits - so the wall reads as art-directed rather than tiled. */
+.gallery-mosaic {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1fr;
+    grid-auto-rows: minmax(200px, auto);
+    gap: var(--space-xs);
 }
-
-.premium-input:focus {
-    outline: none;
-    border-bottom-color: var(--color-accent);
-}
-
-.premium-input::placeholder {
-    color: var(--color-text-secondary);
-    opacity: 0.7;
-}
-
-select.premium-input {
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23b59367%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
-    background-repeat: no-repeat;
-    background-position: right 8px center;
-    background-size: 10px auto;
-    padding-right: 24px;
-}
-
-/* Menu hero - a single hero dish under a warm key light. The glow is the
-   atmosphere; the dish rests (no frame). Immersive through scale + light. */
-.menu-hero {
+.gm {
     position: relative;
-    min-height: 92vh;
-    display: flex;
-    align-items: center;
     overflow: hidden;
-    background-color: var(--color-surface-base);
-    padding-top: 96px;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    min-height: 420px;
 }
-.menu-hero-glow {
+.gm--feature { grid-column: 1; grid-row: 1 / 3; }
+.gm--tall    { grid-column: 2; grid-row: 1 / 3; }
+.gm--wide    { grid-column: 3; grid-row: 1 / 3; }
+
+.gm img { transition: transform 0.8s var(--ease); }
+.gm:hover img { transform: scale(1.04); }
+
+/* The caption sits on a blue wash anchored to the bottom edge - enough to
+   guarantee the label reads over any photograph without dimming the whole
+   image the way a full-frame scrim would. */
+.gm figcaption {
     position: absolute;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-    background:
-        radial-gradient(ellipse 50% 60% at 68% 46%, rgba(240, 139, 67, 0.20) 0%, rgba(240, 139, 67, 0) 60%),
-        radial-gradient(ellipse 90% 90% at 50% 50%, rgba(8, 12, 20, 0) 44%, rgba(8, 12, 20, 0.72) 100%);
+    inset: auto 0 0 0;
+    z-index: 2;
+    padding: var(--space-md) var(--space-sm) var(--space-xs);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--brand-white);
+    background: linear-gradient(to top,
+        color-mix(in srgb, var(--brand-blue) 92%, transparent) 0%,
+        color-mix(in srgb, var(--brand-blue) 30%, transparent) 62%,
+        transparent 100%);
+    border-bottom: 3px solid var(--brand-orange);
 }
-.menu-hero-inner {
-    position: relative;
-    z-index: 1;
-    max-width: 1280px;
-    margin: 0 auto;
-    padding: 0 max(8vw, 24px);
-    width: 100%;
+
+@media (max-width: 900px) {
+    .gallery-mosaic { grid-template-columns: 1fr 1fr; }
+    .gm--feature { grid-column: 1 / 3; grid-row: 1; }
+    .gm--tall    { grid-column: 1; grid-row: 2; }
+    .gm--wide    { grid-column: 2; grid-row: 2; }
+}
+@media (max-width: 560px) {
+    .gallery-mosaic { grid-template-columns: 1fr; }
+    .gm--feature, .gm--tall, .gm--wide { grid-column: 1; grid-row: auto; }
+}
+
+/* ============================================================================
+   SIGNATURE SPREADS
+   An editorial two-up, deliberately off-centre: the plate runs large toward
+   one edge, the copy sits in the opposite column. Alternating sides create a
+   reading rhythm instead of two mirrored, centred rows.
+   ============================================================================ */
+
+.spread {
     display: grid;
-    grid-template-columns: 1.02fr 0.98fr;
-    gap: clamp(24px, 4vw, 72px);
+    grid-template-columns: 1.15fr 0.85fr;
     align-items: center;
-}
-.menu-hero-copy { position: relative; z-index: 2; }
-/* Menu hero headline: contained so "A journey" never fractures to one word
-   per line. Smaller than the homepage display-1, sized to its column. */
-.menu-hero-copy .display-1 {
-    font-size: clamp(2.75rem, 5.5vw, 4.75rem);
-    letter-spacing: -0.03em;
-}
-/* Layered dish cluster - one hero plate with two smaller satellites at
-   different scales, overlapping into an asymmetric, appetite-first collage
-   rather than a single centred image. */
-.menu-hero-stage {
-    position: relative;
-    z-index: 1;
-    width: 100%;
-}
-.menu-hero-cluster {
-    position: relative;
-    width: 100%;
-    max-width: 640px;
-    margin-left: auto;
-    aspect-ratio: 1 / 1;
-}
-/* A soft warm environment the dishes float within - reads as premium editorial
-   light, not a flat backdrop. Sits behind every plate. */
-.menu-hero-cluster::before {
-    content: "";
-    position: absolute;
-    inset: 6% 2% 10% 2%;
-    background: radial-gradient(ellipse 58% 52% at 52% 44%, rgba(240, 139, 67, 0.12) 0%, rgba(240, 139, 67, 0.04) 40%, rgba(240, 139, 67, 0) 70%);
-    z-index: 0;
-    pointer-events: none;
-    filter: blur(6px);
-}
-/* Scoped under .menu-hero-cluster so these win over the later, equal-specificity
-   .dish base rules (which set position:relative and width:100%). */
-.menu-hero-cluster .mh-dish { position: absolute; width: auto; }
-.menu-hero-cluster .mh-dish--hero  { width: 74%; top: 6%; right: 3%; z-index: 2; }
-.menu-hero-cluster .mh-dish--sat-a { width: 40%; left: 0%; bottom: 5%; z-index: 3; }
-.menu-hero-cluster .mh-dish--sat-b { width: 31%; top: 0%; left: 15%; z-index: 1; }
-/* Depth: the back plate recedes (dimmer, cooler, softer), the front plate
-   reads crisp and near - so the cluster occupies real space rather than
-   three cut-outs on one plane. */
-.menu-hero-cluster .mh-dish--sat-b .dish-img {
-    filter:
-        drop-shadow(0 18px 26px rgba(0, 0, 0, 0.42))
-        brightness(0.86) saturate(0.92);
-}
-.menu-hero-cluster .mh-dish--sat-a .dish-img {
-    filter:
-        drop-shadow(0 2px 1px rgba(255, 246, 232, 0.28))
-        drop-shadow(0 22px 26px rgba(0, 0, 0, 0.5))
-        drop-shadow(0 8px 12px rgba(0, 0, 0, 0.4));
-}
-@media (max-width: 860px) {
-    .menu-hero { min-height: 0; padding-top: 128px; padding-bottom: 48px; }
-    .menu-hero-inner { grid-template-columns: 1fr; gap: 8px; }
-    .menu-hero-stage { order: -1; }
-    .menu-hero-cluster { max-width: 380px; margin: 0 auto; aspect-ratio: 4 / 3; }
-    .menu-hero-cluster .mh-dish--hero  { width: 70%; top: 4%; right: 6%; }
-    .menu-hero-cluster .mh-dish--sat-a { width: 40%; left: 2%; bottom: 0; }
-    .menu-hero-cluster .mh-dish--sat-b { display: none; }
+    gap: clamp(24px, 5vw, 64px);
 }
 
-/* Sprint 02: Menu Culinary Gallery */
-.menu-nav-section {
-    border-bottom: 1px solid rgba(0,0,0,0.05);
+.spread__media { position: relative; }
+.spread__copy h3 {
+    font-size: clamp(1.75rem, 3.2vw, 2.6rem);
+    margin-bottom: 6px;
 }
-.menu-nav::-webkit-scrollbar {
-    display: none;
+.spread__copy p {
+    color: var(--text-secondary);
+    text-wrap: pretty;
+    margin-bottom: var(--space-xs);
 }
-/* Category hierarchy: a soft hover state on inactive pills gives the bar
-   depth and feedback without adding static dividers that would clutter the
-   already-solid active pill. */
-.menu-nav-item {
+.spread__tag {
+    display: inline-block;
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--brand-blue);
+    background: color-mix(in srgb, var(--brand-orange) 30%, var(--brand-white));
     border-radius: var(--radius-pill);
+    padding: 5px 14px;
+    margin-bottom: var(--space-xs);
 }
-.menu-nav-item:hover {
-    background-color: rgba(255, 255, 255, 0.07);
+/* On the orange section an orange-tinted pill would disappear, so tags invert
+   to solid blue with white type. */
+.on-warm .spread__tag {
+    background: var(--brand-blue);
+    color: var(--brand-white);
 }
-.menu-category {
-    scroll-margin-top: 160px; /* Offset for sticky header + nav */
-}
-
-/* Phone-only contextual section rail - a Google-Docs-style document outline.
-   Hidden on desktop (the horizontal pill nav owns that); on phones it's a slim
-   fixed rail of dashes you drag a finger along to magnify sections, releasing
-   (or tapping) to jump. Never a panel/drawer - content stays visible. */
-/* phone-only section rail */
-.menu-rail { display: none; }
-@media (max-width: 768px) {
-    .menu-rail {
-        display: flex;
-        flex-direction: column;
-        align-items: flex-end;
-        gap: 0;
-        position: fixed;
-        right: 0;
-        top: 50%;
-        transform: translateY(-50%);
-        z-index: 9999;
-        max-height: 80vh;
-        padding: 8px 6px 8px 16px;
-        touch-action: none;
-        -webkit-touch-callout: none;
-        user-select: none;
-        -webkit-user-select: none;
-    }
-    .menu-rail-item {
-        all: unset;
-        position: relative;
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-        padding: 8px 0;
-        min-height: 28px;
-        cursor: pointer;
-        -webkit-tap-highlight-color: transparent;
-        touch-action: none;
-    }
-    .menu-rail-name {
-        position: absolute;
-        right: calc(100% + 14px);
-        top: 50%;
-        font-family: var(--font-display);
-        font-size: 1.05rem;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        line-height: 1.05;
-        white-space: nowrap;
-        transform-origin: right center;
-        text-shadow: 0 2px 12px rgba(5, 7, 10, 0.96), 0 0 4px rgba(5, 7, 10, 0.98);
-        transition: opacity 0.35s cubic-bezier(0.22, 1, 0.36, 1),
-                    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
-                    color 0.3s ease;
-        pointer-events: none;
-    }
-    .menu-rail-dash {
-        display: block;
-        height: 2px;
-        border-radius: 1px;
-        transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
-        pointer-events: none;
-        flex-shrink: 0;
-    }
-
-    /* Backdrop strip - a dark scrim behind the rail area. At rest it's a subtle
-       edge gradient so white dashes don't vanish against white menu text. On
-       touch it darkens and widens so rail labels sit on a solid readable band. */
-    .menu-rail-backdrop {
-        position: fixed;
-        right: 0;
-        top: 0;
-        bottom: 0;
-        width: 60px;
-        z-index: 9998;
-        pointer-events: none;
-        background: linear-gradient(to left, rgba(18,16,24,0.45), transparent);
-        transition: width 0.3s ease, background 0.3s ease;
-    }
-    .menu-rail-backdrop--active {
-        width: 130px;
-        background: linear-gradient(to left, rgba(18,16,24,0.88), rgba(18,16,24,0.38) 60%, transparent);
-    }
-
-    /* Active rail - labels get a solid pill behind them so they're always
-       readable, no matter what menu content sits behind the rail. */
-    .menu-rail--active .menu-rail-name {
-        background: var(--color-primary);
-        color: #ffffff !important;
-        font-weight: 700 !important;
-        border-radius: var(--radius-sm);
-        padding: 5px 14px;
-        right: calc(100% + 18px);
-        box-shadow: 0 6px 18px rgba(240,139,67,0.3);
-    }
-}
-@media (prefers-reduced-motion: reduce) {
-    .menu-rail-name, .menu-rail-dash { transition: none !important; }
-}
-.menu-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: var(--space-layout) var(--space-component);
-}
-
+.on-warm .spread__note { color: color-mix(in srgb, var(--brand-blue) 78%, var(--brand-black)); }
+.on-warm .spread__price { color: var(--brand-blue) !important; }
 /*
- * Menu masonry stagger: only offset cards once the grid is multi-column
- * (>=768px). In the single-column mobile layout the offset would create
- * uneven, jarring vertical gaps, so we rely on the grid row-gap instead.
+ * Component-level `p` colours (.spread__copy p, .editorial__copy p) carry the
+ * same specificity as the surface-level `.on-warm p` / `.on-deep p` rules and
+ * are declared later, so they were winning - which put mid-grey body copy on
+ * orange at 2.87:1. Surface always beats component: these overrides are more
+ * specific, so a block moved onto a coloured surface re-inks itself.
  */
-@media (min-width: 768px) {
-    .menu-grid {
-        row-gap: 0;
-    }
-    .menu-card.is-even {
-        margin-bottom: 120px;
-    }
-    .menu-card.is-odd {
-        margin-top: 120px;
-    }
+.on-warm .spread__copy p,
+.on-warm .editorial__copy p { color: color-mix(in srgb, var(--brand-blue) 88%, var(--brand-black)); }
+.on-deep .spread__copy p,
+.on-deep .editorial__copy p { color: var(--text-on-deep-soft); }
+.spread__note {
+    font-family: var(--font-accent);
+    font-size: 1.45rem;
+    line-height: 1.2;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-xs) !important;
+}
+.spread__price {
+    font-family: var(--font-sans);
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--brand-blue) !important;
+    letter-spacing: 0.02em;
+    margin-bottom: var(--space-sm) !important;
 }
 
+@media (max-width: 820px) {
+    .spread { grid-template-columns: 1fr; gap: var(--space-sm); }
+    .spread__media { max-width: 460px; margin-inline: auto; width: 100%; }
+}
 
-/* Food photography - the dish IS the hero. No frame, no box: the plated
-   cutout rests on the page, lit from above. A silhouette-following drop
-   shadow reads as an overhead key light; a separate soft contact shadow
-   grounds the plate on the surface. On hover the dish lifts a touch and its
-   contact shadow spreads, the way a plate lifts off a table. */
+/* ── Food photography ────────────────────────────────────────────────────
+   The dish IS the hero: no frame, no box. The plated cutout rests on the
+   page lit from above - a silhouette-following drop shadow reads as the key
+   light, a separate contact shadow grounds the plate. Carried over from the
+   previous build and retuned for a light ground: the shadows are softer and
+   blue-tinted, because heavy black under a plate on white reads as grime.
+   ──────────────────────────────────────────────────────────────────────── */
+
 .dish {
     position: relative;
     width: 100%;
+    aspect-ratio: 4 / 3;
 }
-/* Overhead key light - a soft warm pool falling across the top of the plate,
-   as if lit from the upper side. The element extends above the dish and is
-   clipped by overflow:hidden, so the top edge dissolves instead of cutting
-   in with a straight line. */
-.dish::before {
-    content: "";
-    position: absolute;
-    left: 50%;
-    top: 0;
-    width: 84%;
-    height: 74%;
-    transform: translateX(-50%);
-    background: radial-gradient(ellipse 62% 50% at 50% 26%, rgba(255, 238, 214, 0.26) 0%, rgba(255, 238, 214, 0) 70%);
-    -webkit-mask-image:
-        linear-gradient(to right, transparent 0, #000 15%, #000 85%, transparent 100%),
-        linear-gradient(to bottom, transparent 0, #000 20%, #000 85%, transparent 100%);
-    -webkit-mask-composite: source-in;
-    mask-image:
-        linear-gradient(to right, transparent 0, #000 15%, #000 85%, transparent 100%),
-        linear-gradient(to bottom, transparent 0, #000 20%, #000 85%, transparent 100%);
-    mask-composite: intersect;
-    z-index: 0;
-    pointer-events: none;
-    opacity: 0.7;
-    transition: opacity 0.5s ease;
-}
-.dish:hover::before { opacity: 1; }
-/* Contact shadow: tight under the plate, dark and short - reads as cast
-   directly by the overhead key light. A concentrated dark core with a
-   brief penumbra so the dish floats just above the surface. */
+/* Contact shadow: tight under the plate, short, cast by the overhead light. */
 .dish::after {
     content: "";
     position: absolute;
-    left: 26%;
-    right: 26%;
-    bottom: 5%;
-    height: 4%;
-    background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.78) 0%, rgba(0, 0, 0, 0.38) 35%, rgba(0, 0, 0, 0) 78%);
-    filter: blur(5px);
+    left: 24%;
+    right: 24%;
+    bottom: 6%;
+    height: 5%;
+    background: radial-gradient(ellipse at center,
+        color-mix(in srgb, var(--brand-blue) 34%, transparent) 0%,
+        color-mix(in srgb, var(--brand-blue) 14%, transparent) 40%,
+        transparent 78%);
+    filter: blur(7px);
     z-index: 0;
     pointer-events: none;
-    transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.5s ease;
+    transition: transform 0.5s var(--ease), opacity 0.5s ease;
 }
 .dish > img,
 .dish .dish-img {
     position: relative;
     z-index: 1;
     object-fit: contain;
-    /* Directional light from the upper side: a fine near-white top highlight,
-       layered over a soft mid shadow and a deeper ambient shadow - premium
-       depth without any artificial glow. */
     filter:
-        drop-shadow(0 1px 0 rgba(255, 246, 232, 0.25))
-        drop-shadow(0 14px 18px rgba(0, 0, 0, 0.4))
-        drop-shadow(0 30px 46px rgba(0, 0, 0, 0.26));
-    transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1), filter 0.5s ease;
+        drop-shadow(0 10px 14px color-mix(in srgb, var(--brand-blue) 18%, transparent))
+        drop-shadow(0 24px 36px color-mix(in srgb, var(--brand-blue) 12%, transparent));
+    transition: transform 0.5s var(--ease), filter 0.5s ease;
 }
 .dish:hover > img,
-.dish:hover .dish-img {
-    transform: translateY(-8px);
-}
-.dish:hover::after {
-    transform: scale(1.1);
-    opacity: 0.66;
-}
-/* Some plates were shot dead-on and read flat, like a UI icon. A gentle tilt,
-   applied only to those, re-seats the dish on the table at a natural angle;
-   it settles level on hover. Opt-in via .dish--angled so top-down shots that
-   already look plated are left untouched. */
+.dish:hover .dish-img { transform: translateY(-8px); }
+.dish:hover::after { transform: scale(1.1); opacity: 0.7; }
+
+/* Some plates were shot dead-on and read flat, like a UI icon. A gentle tilt
+   re-seats those on the table; it settles level on hover. Opt-in, so top-down
+   shots that already look plated are left alone. */
 .dish--angled > img,
-.dish--angled .dish-img {
-    transform: rotate(-5deg);
-}
+.dish--angled .dish-img { transform: rotate(-5deg); }
 .dish--angled:hover > img,
-.dish--angled:hover .dish-img {
-    transform: translateY(-8px) rotate(0deg);
-}
+.dish--angled:hover .dish-img { transform: translateY(-8px) rotate(0deg); }
 
-@media (prefers-reduced-motion: reduce) {
-    .dish--angled > img,
-    .dish--angled .dish-img { transform: none; }
-}
 
-/* Floating presentation - for dishes suspended in space (the menu hero), not
-   resting on a surface. The tight contact shadow becomes a soft shadow cast
-   well below to imply suspension, and a wider ambient glow lifts the plate off
-   the dark ground. Light stays consistent: highlight on top, shadow beneath. */
-.dish--float::after {
-    left: 24%;
-    right: 24%;
-    bottom: 1%;
-    height: 8%;
-    background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.62) 0%, rgba(0, 0, 0, 0.24) 42%, rgba(0, 0, 0, 0) 80%);
-    filter: blur(12px);
-}
-.dish--float::before {
-    width: 100%;
-    height: 100%;
-    top: 0;
-    opacity: 0.85;
-    background: radial-gradient(ellipse 58% 54% at 50% 42%, rgba(255, 236, 210, 0.22) 0%, rgba(255, 236, 210, 0) 72%);
-}
-.dish--float .dish-img {
-    filter:
-        drop-shadow(0 2px 1px rgba(255, 246, 232, 0.24))
-        drop-shadow(0 24px 30px rgba(0, 0, 0, 0.46))
-        drop-shadow(0 10px 16px rgba(0, 0, 0, 0.34));
-}
+/* ============================================================================
+   THE FOOD - quick picks, category strip
+   ------------------------------------------------------------
+   Under the signature plate, five more dishes at a glance with prices. Small,
+   dense and scannable on purpose: this is the part of the page that answers
+   "what do they do and what does it cost" in about three seconds. White cards
+   on the orange band, matching the menu page, so the pattern is learned once.
+   ============================================================================ */
 
-/* Signature spreads - an editorial two-up, deliberately off-centre. The plate
-   runs large toward one edge; the copy sits in the opposite column with
-   generous negative space and a ghosted index numeral. Alternating sides
-   create a reading rhythm rather than two mirrored, centred rows. */
-.spread {
+.picks {
     display: grid;
-    grid-template-columns: 1.28fr 0.72fr;
-    align-items: center;
-    gap: clamp(28px, 5vw, 72px);
-    position: relative;
+    grid-template-columns: repeat(5, 1fr);
+    gap: clamp(12px, 1.4vw, 20px);
+    margin-top: clamp(40px, 5vw, 72px);
 }
-.spread--reverse { grid-template-columns: 0.72fr 1.28fr; }
-.spread--reverse .spread-media { order: 2; }
-.spread--reverse .spread-copy  { order: 1; text-align: right; }
-.spread--reverse .spread-copy .spread-meta { justify-content: flex-end; }
-.spread-media { position: relative; }
-.spread-index {
-    display: block;
-    font-family: var(--font-display);
-    font-size: clamp(3.5rem, 8vw, 7rem);
-    line-height: 0.8;
-    font-weight: 700;
-    color: rgba(240, 139, 67, 0.16);
-    margin-bottom: 12px;
-}
-.spread-meta {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    flex-wrap: wrap;
-    margin-bottom: 20px;
-}
-@media (max-width: 820px) {
-    .spread,
-    .spread--reverse { grid-template-columns: 1fr; gap: 24px; }
-    .spread--reverse .spread-media { order: -1; }
-    .spread--reverse .spread-copy  { order: 2; text-align: left; }
-    .spread--reverse .spread-copy .spread-meta { justify-content: flex-start; }
-    .spread-media { width: 100%; max-width: 460px; margin: 0 auto; }
-}
-
-.menu-card {
-    background: transparent;
-    padding: var(--space-component) 0 0;
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    text-align: left;
-    transition: transform 0.3s ease;
-    height: 100%;
-}
-.menu-card-visual {
-    width: 100%;
-    aspect-ratio: 1 / 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: var(--space-component);
-}
-.menu-card-visual img {
-    max-width: 100%;
-    max-height: 100%;
-    object-fit: contain;
-    filter: drop-shadow(0 12px 24px rgba(0,0,0,0.15));
-    transition: transform 0.4s ease;
-}
-.menu-card:hover .menu-card-visual img {
-    transform: scale(1.05);
-}
-.menu-card-content {
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-end;
-    flex-grow: 1;
-}
-
-/* CHAPTER III - Heritage: an art-directed mosaic, not an image-plus-paragraph
-   band. A large feature room anchors the composition; supporting rooms at
-   different scales stagger around it; the signature line sits in its own
-   negative space above. Stays dark - part of the Editorial Nocturne. */
-.heritage {
-    position: relative;
-    background-color: var(--color-surface-base);
-    padding: var(--space-macro) 0;
-    overflow: hidden;
-}
-.heritage-inner {
-    position: relative;
-    z-index: 2;
-    max-width: 1280px;
-    margin: 0 auto;
-    padding: 0 max(8vw, 24px);
-}
-.heritage-head {
-    max-width: 800px;
-    margin-bottom: 56px;
-}
-.heritage-eyebrow {
-    display: inline-flex;
-    align-items: center;
-    gap: 14px;
-    color: var(--color-primary);
-    letter-spacing: 0.25em;
-    text-transform: uppercase;
-    font-size: 0.8rem;
-    font-weight: 600;
-    margin-bottom: 24px;
-}
-.heritage-eyebrow::before {
-    content: "";
-    width: 40px;
-    height: 1px;
-    background: var(--color-primary);
-    display: inline-block;
-}
-.heritage-quote {
-    font-family: var(--font-display);
-    font-size: clamp(2rem, 3.6vw, 3.4rem);
-    line-height: 1.14;
-    color: var(--color-text-primary);
-    font-weight: 600;
-    font-style: italic;
-    margin: 0;
-    text-wrap: balance;
-}
-.heritage-quote em { color: var(--color-primary); font-style: italic; }
-
-/* The mosaic: a 3-column editorial grid. One tall feature, one portrait
-   supporting crop, one wide crop, and a text block set into the negative
-   space - each a different scale, so the wall reads as curated, not tiled. */
-.heritage-mosaic {
-    display: grid;
-    grid-template-columns: 1.5fr 1fr 1fr;
-    gap: 24px;
-}
-.hm {
-    position: relative;
-    overflow: hidden;
+.pick {
+    background: var(--brand-white);
     border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-float);
+    padding: 14px 14px 16px;
+    text-align: center;
+    transition: transform 0.35s var(--ease), box-shadow 0.35s var(--ease);
 }
-.hm img { 
-    object-fit: cover;
-    transition: transform 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+.pick:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+.pick__media { position: relative; margin-bottom: 8px; }
+.pick__media .dish { aspect-ratio: 1 / 1; }
+.pick__name {
+    font-family: var(--font-display);
+    font-size: 0.98rem;
+    line-height: 1.25;
+    color: var(--brand-blue);
+    margin-bottom: 3px;
 }
-.hm:hover img {
-    transform: scale(1.04);
-}
-.hm--feature { grid-column: 1; grid-row: 1 / 3; min-height: 460px; }
-.hm--tall    { grid-column: 2; grid-row: 1; min-height: 300px; }
-.hm--wide    { grid-column: 3; grid-row: 1; min-height: 300px; }
-/* The caption sits as a horizontal band beneath the two supporting rooms,
-   spanning both right columns - text and its link on one line, not a cramped
-   paragraph. */
-.hm--note {
-    grid-column: 2 / 4;
-    grid-row: 2;
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 24px;
-    padding-top: 16px;
-}
-.hm--note p {
-    color: var(--color-text-secondary);
-    line-height: 1.8;
-    max-width: 55ch;
-    font-size: 1.05rem;
+.pick__price {
+    font-family: var(--font-sans);
+    font-size: 0.82rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-secondary) !important;
+    margin: 0 !important;
 }
 
-/* Interior caption for images */
-.hm-cap {
-    position: absolute;
-    bottom: 24px;
-    left: 24px;
-    color: #fdfbf7;
-    font-weight: 500;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    font-size: 0.85rem;
-    z-index: 2;
-    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6);
+/* Category strip - the fastest route into a 75-item menu is by craving, not
+   by scrolling. Each chip lands on the right anchor inside the menu page. */
+.food-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-top: clamp(36px, 4vw, 56px);
 }
-.hm-scrim {
+.food-cats {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+}
+.food-cat {
+    display: inline-block;
+    padding: 9px 18px;
+    border-radius: var(--radius-pill);
+    border: 1.5px solid var(--brand-blue);
+    font-family: var(--font-sans);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--brand-blue);
+    text-decoration: none;
+    transition: background-color 0.3s var(--ease), color 0.3s var(--ease);
+}
+.food-cat:hover, .food-cat:focus-visible {
+    background: var(--brand-blue);
+    color: var(--brand-white);
+}
+
+@media (max-width: 900px) {
+    .picks { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 560px) {
+    .picks { grid-template-columns: repeat(2, 1fr); }
+    .pick__name { font-size: 0.88rem; }
+}
+
+/* ============================================================================
+   GIFT CARDS
+   ============================================================================ */
+
+.gift {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    gap: clamp(32px, 5vw, 72px);
+}
+.gift__copy p { margin-bottom: var(--space-sm); max-width: 44ch; color: var(--text-secondary); }
+.gift__copy .display-2 { color: var(--text-heading); }
+.gift__list li { color: var(--text-primary); }
+.gift__list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: var(--space-md);
+}
+.gift__list li {
+    position: relative;
+    padding-left: 22px;
+    font-size: 0.95rem;
+}
+.gift__list li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.62em;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--brand-orange);
+}
+
+/* The saffron brush sweep behind the card stack. Three copies of the same
+   stroke, rotated and offset, read as one continuous painted curve - the same
+   composition the previous build used, which is the most characterful thing in
+   this section. Sits behind the cards, never over them. */
+.gift__brush {
     position: absolute;
     inset: 0;
-    background: linear-gradient(160deg, rgba(8, 12, 20, 0.04) 0%, rgba(8, 12, 20, 0.55) 100%);
-    z-index: 1;
-    pointer-events: none;
-    transition: background 0.6s ease;
-}
-.hm:hover .hm-scrim {
-    background: linear-gradient(160deg, rgba(8, 12, 20, 0.0) 0%, rgba(8, 12, 20, 0.35) 100%);
-}
-@media (max-width: 1024px) {
-    .heritage-mosaic { grid-template-columns: 1fr 1fr; }
-    .hm--feature { grid-column: 1 / 3; grid-row: 1; min-height: 340px; }
-    .hm--tall    { grid-column: 1; grid-row: 2; min-height: 240px; }
-    .hm--wide    { grid-column: 2; grid-row: 2; min-height: 240px; }
-    .hm--note    { grid-column: 1 / 3; grid-row: 3; padding: 8px 0; }
-}
-@media (max-width: 768px) {
-    .heritage-mosaic { grid-template-columns: 1fr; }
-    .hm--feature, .hm--tall, .hm--wide, .hm--note {
-        grid-column: 1 !important;
-        grid-row: auto !important;
-    }
-    .hm--feature { min-height: 300px; }
-    .hm--note { flex-direction: column; align-items: flex-start; gap: 20px; }
-}
-
-/* Gift card stack hover - replaces inline JS onMouseEnter/Leave */
-.gift-card-stack {
-    transition: transform 0.3s ease;
-}
-.gift-card-stack:hover {
-    transform: scale(1.02);
-}
-
-/* Phase 9: Motion Classes */
-.reveal-hidden {
-    opacity: 0;
-    transform: translateY(24px);
-    transition: opacity 1000ms cubic-bezier(0.22, 1, 0.36, 1), transform 1000ms cubic-bezier(0.22, 1, 0.36, 1);
-}
-.reveal-visible.reveal-hidden,
-.reveal-hidden.reveal-visible {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-.reveal-clip {
-    clip-path: inset(100% 0 0 0);
-    transition: clip-path 1.2s cubic-bezier(0.25, 1, 0.5, 1);
-}
-.reveal-visible .reveal-clip, .reveal-clip.reveal-visible {
-    clip-path: inset(0 0 0 0);
-}
-
-/* The wok toss: for the two signature-dish images only. A brief arc and
-   settle - a touch of overshoot on landing - rather than a plain fade-up,
-   echoing "the rhythm of the wok" language already on this page. */
-.reveal-toss {
-    opacity: 0;
-    transform: translateY(30px) rotate(-5deg) scale(0.93);
-    transition:
-        opacity 700ms cubic-bezier(0.22, 1, 0.36, 1),
-        transform 900ms cubic-bezier(0.34, 1.4, 0.64, 1);
-}
-.reveal-toss.reveal-visible {
-    opacity: 1;
-    transform: translateY(0) rotate(0deg) scale(1);
-}
-
-/* Chapter transition: a brush stroke marking the seam between sections,
-   swept once as the next chapter arrives (see components/ui/brush-transition.tsx) */
-.brush-sweep {
-    z-index: 60;
-    pointer-events: none;
-    overflow: visible;
-}
-.brush-sweep-img {
-    position: absolute;
-    top: 0;
-    left: 50%;
-    height: 100%;
-    width: auto;
-    max-width: none;
-    transform: translate(-130vw, 0);
-    animation: brushSweep 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-    filter: drop-shadow(0 24px 36px rgba(0, 0, 0, 0.45));
-}
-@keyframes brushSweep {
-    to { transform: translate(130vw, 0); }
-}
-
-/* ============================================================
-   Background motif system
-   One visual language, many marks. Each major section can carry its own
-   low-opacity Thai motif (lotus, lattice) as a near-invisible black-on-black
-   texture - discovered, not noticed. Purely decorative: always behind
-   content, never interactive.
-   ============================================================ */
-.motif {
-    position: absolute;
     z-index: 0;
     pointer-events: none;
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: contain;
-    opacity: 0.05;
+    opacity: 0.95;
+    /* Centre stroke. The three pieces share one anchor scheme - centred on a
+       point, then rotated - so their tails overlap into a single continuous
+       sweep rising left to right, rather than three separate blobs. */
+    top: 50%;
+    left: 50%;
+    right: auto;
+    bottom: auto;
+    width: 100%;
+    height: 100%;
+    transform: translate(-50%, -50%) rotate(-45deg) scale(1.4);
 }
-/* A single lotus, drifted to a corner - for feature sections. */
-.motif--lotus {
-    background-image: url('/assets/Background-20260709T183540Z-2-001/Background/Lotus/Lotus Crop Transparent.webp');
-    filter: grayscale(1) brightness(1.6);
+.gift__brush--b {
+    top: 70%;
+    left: 35%;
+    transform: translate(-50%, -50%) rotate(-30deg) scale(1.3);
 }
-/* A quiet repeating lotus - the actual brand motif (Lotus Single White),
-   tiled at very low opacity for an atmospheric field rather than a loud
-   pattern. This is the Khao San visual language, not abstract geometry. */
-.motif--lotus-field {
-    background-image: url('/assets/Background-20260709T183540Z-2-001/Background/Lotus/Lotus Single White.svg');
-    background-repeat: repeat;
-    background-size: 200px;
-    opacity: 0.035;
-}
-.motif--tl   { inset: -4% auto auto -4%; width: 42%; height: 42%; }
-.motif--tr   { inset: -4% -4% auto auto; width: 40%; height: 40%; }
-.motif--br   { inset: auto -4% -6% auto; width: 44%; height: 44%; }
-.motif--bl   { inset: auto auto -6% -4%; width: 40%; height: 40%; }
-.motif--fill { inset: 0; width: auto; height: auto; }
-
-/* ============================================================
-   Designed section backgrounds
-   Real brand artwork (the deep-navy Thai lattice + lotus line-work) behind a
-   dark scrim, so a section reads as near-black with the pattern quietly
-   emerging - richer than a flat fill, still cinematic and legible. Used to
-   replace solid-colour sections; varied per section so nothing repeats.
-   ============================================================ */
-.bg-lattice {
-    background-color: var(--color-surface-base);
-    background-image:
-        linear-gradient(rgba(8, 12, 20, 0.52), rgba(8, 12, 20, 0.65)),
-        url('/assets/Background-20260709T183540Z-2-001/Background/Lotus/Lotus BG.webp');
-    background-size: cover, cover;
-    background-position: center, center;
-    background-repeat: no-repeat, no-repeat;
+.gift__brush--c {
+    top: 30%;
+    left: 65%;
+    transform: translate(-50%, -50%) rotate(-60deg) scale(1.3);
 }
 
-/* Corner-florals variant - lotus blooms anchored in the corners over the
-   lattice, for hero-scale sections where the centre must stay clear for copy. */
-.bg-lotus-corners {
-    background-color: var(--color-surface-base);
-    background-image:
-        linear-gradient(rgba(8, 12, 20, 0.55), rgba(8, 12, 20, 0.70)),
-        url('/assets/Background-20260709T183540Z-2-001/Background/Landing Page Section/Lotus background.webp');
-    background-size: cover, cover;
-    background-position: center, center;
-    background-repeat: no-repeat, no-repeat;
+.gift__cards {
+    position: relative;
+    min-height: 340px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
-/* Deeper scrim for text-dense sections where the pattern should read but stay
-   quiet under long-form copy. */
-.bg-lattice--quiet {
-    background-color: var(--color-surface-base);
-    background-image:
-        linear-gradient(rgba(8, 12, 20, 0.68), rgba(8, 12, 20, 0.75)),
-        url('/assets/Background-20260709T183540Z-2-001/Background/Lotus/Lotus BG.webp');
-    background-size: cover, cover;
-    background-position: center, center;
-    background-repeat: no-repeat, no-repeat;
+/* Two denominations, so both cards have to be readable. The offsets were
+   previously ~11%, which buried the 3,000 card almost entirely behind the
+   1,500 - the section then showed one card and claimed two. */
+.gift__card {
+    position: absolute;
+    z-index: 1;
+    width: min(66%, 360px);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: 0 24px 52px rgba(0, 0, 0, 0.45);
+    transition: transform 0.6s var(--ease);
+}
+.gift__card img { width: 100%; height: auto; }
+.gift__card--back  { transform: rotate(-7deg) translate(-30%, -17%); }
+.gift__card--front { transform: rotate(5deg) translate(24%, 15%); }
+.gift:hover .gift__card--back  { transform: rotate(-9deg) translate(-34%, -20%); }
+.gift:hover .gift__card--front { transform: rotate(7deg) translate(28%, 18%); }
+
+@media (max-width: 900px) {
+    .gift { grid-template-columns: 1fr; }
+    .gift__cards { order: -1; min-height: 260px; }
 }
 
+/* ============================================================================
+   LOCATIONS
+   ------------------------------------------------------------
+   Three rooms on the deep-blue band, presented the same way the gallery is:
+   the photograph is the object, the type sits under it. The previous version
+   was a white card with a border, a badge and a stacked definition list - it
+   read as a directory listing dropped into a restaurant site, and it was the
+   one place on the page that looked like a template. There is no card chrome
+   here now; the image carries the weight.
+   ============================================================================ */
 
-/* Gift card hero - same split-grid logic as the menu hero: contained copy on
-   one side, the card composition on the other, one padding rhythm, collapsing
-   to a single column with the visual on top on narrow screens. */
-.giftcard-hero-inner {
+.loc-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(20px, 2.5vw, 36px);
+    align-items: stretch;
+}
+
+.loc-card {
+    display: flex;
+    flex-direction: column;
+    background: none;
+    border: 0;
+    box-shadow: none;
+}
+
+.loc-card__media {
+    position: relative;
+    aspect-ratio: 4 / 5;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--space-xs);
+    background: color-mix(in srgb, var(--brand-white) 10%, transparent);
+}
+.loc-card__media img {
+    transition: transform 0.7s var(--ease);
+}
+.loc-card:hover .loc-card__media img { transform: scale(1.05); }
+/* A blue wash rising from the bottom so the label always reads, without
+   dimming the whole photograph the way a full-frame scrim would. */
+.loc-card__media::after {
+    content: "";
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 55%;
+    z-index: 1;
+    pointer-events: none;
+    background: linear-gradient(to top,
+        color-mix(in srgb, var(--brand-blue) 92%, transparent) 0%,
+        transparent 100%);
+}
+
+/* The positioning label sits on the image, in the brand's own orange. */
+.loc-card__type {
+    position: absolute;
+    left: 16px;
+    bottom: 14px;
+    z-index: 2;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--brand-orange);
+}
+
+.loc-card__body {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    padding: 0 2px;
+}
+.loc-card__name {
+    font-size: clamp(1.4rem, 2vw, 1.8rem);
+    color: var(--brand-white);
+    margin-bottom: 6px;
+}
+.loc-card__address {
+    font-style: normal;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--brand-powder);
+    margin-bottom: var(--space-xs);
+}
+
+/* Hours and phone as a quiet two-line block, not a bordered data table. */
+.loc-card__meta {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: var(--space-sm);
+    flex: 1;
+}
+.loc-card__meta dt {
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--brand-powder) 62%, transparent);
+    margin-bottom: 1px;
+}
+.loc-card__meta dd { font-size: 0.86rem; color: var(--brand-powder); }
+.loc-card__meta dd span { display: block; }
+.loc-card__meta dd a {
+    display: inline-block;
+    padding-block: 4px;
+    text-decoration: none;
+}
+.loc-card__meta dd a:hover { color: var(--brand-orange); }
+
+.loc-card__actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+@media (max-width: 1080px) {
+    .loc-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px) {
+    .loc-grid { grid-template-columns: 1fr; gap: var(--space-md); }
+    .loc-card__media { aspect-ratio: 16 / 10; }
+}
+
+/* ============================================================================
+   CONTACT
+   ============================================================================ */
+
+.contact {
+    position: relative;
+    overflow: hidden;
+    background-color: var(--brand-blue);
+}
+.contact__video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 42%;
+    z-index: 0;
+    filter: saturate(0.88);
+}
+/* Same vignette language as the hero: edges and corners in shadow, centre
+   left open, a warm light behind the copy. No flat veil. */
+.contact__scrim {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background:
+        radial-gradient(ellipse 48% 44% at 50% 48%,
+            color-mix(in srgb, var(--brand-orange) 16%, transparent) 0%,
+            transparent 64%),
+        linear-gradient(to bottom, color-mix(in srgb, var(--brand-blue) 80%, transparent) 0%, transparent 34%),
+        linear-gradient(to top,    color-mix(in srgb, var(--brand-blue) 88%, transparent) 0%, transparent 38%),
+        linear-gradient(to right,  color-mix(in srgb, var(--brand-blue) 70%, transparent) 0%, transparent 30%),
+        linear-gradient(to left,   color-mix(in srgb, var(--brand-blue) 70%, transparent) 0%, transparent 30%),
+        radial-gradient(circle at 0% 0%,     color-mix(in srgb, var(--brand-blue) 78%, transparent) 0%, transparent 34%),
+        radial-gradient(circle at 100% 100%, color-mix(in srgb, var(--brand-blue) 78%, transparent) 0%, transparent 34%);
+}
+.contact__inner {
     position: relative;
     z-index: 2;
-    width: 100%;
-    max-width: 1280px;
-    margin: 0 auto;
-    padding: 120px max(8vw, 24px) 96px;
-    display: grid;
-    grid-template-columns: 1.02fr 0.98fr;
-    grid-template-rows: auto auto;
-    gap: clamp(24px, 4vw, 72px);
-    align-items: start;
+    max-width: 56ch;
+    margin-inline: auto;
+    text-align: center;
 }
-.gift-hero-head {
-    grid-column: 1;
-    grid-row: 1;
-    margin-bottom: 24px;
-}
-.gift-hero-body {
-    grid-column: 1;
-    grid-row: 2;
-}
-.giftcard-hero-cards {
-    grid-column: 2;
-    grid-row: 1 / 3;
+.contact__inner p { margin-bottom: var(--space-md); }
+.contact__inner .display-2 { color: var(--brand-white); }
+.contact__inner p:not(.overline) { color: var(--brand-powder); }
+
+/* ============================================================================
+   FOOTER
+   ============================================================================ */
+
+.site-footer {
     position: relative;
-    min-height: 420px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 0 clamp(8px, 2vw, 40px);
+    background-color: var(--surface-deep);
+    padding-block: var(--space-lg) var(--space-sm);
+    overflow: hidden;
 }
+.site-footer__inner { position: relative; z-index: 1; }
 
-@media (max-width: 860px) {
-    .giftcard-hero-inner {
-        grid-template-columns: 1fr;
-        grid-template-rows: auto;
-        gap: 36px;
-        padding-top: 128px;
-        padding-bottom: 56px;
-    }
-    .gift-hero-head {
-        grid-column: 1;
-        grid-row: auto;
-        order: -2;
-        margin-bottom: 0;
-        padding-bottom: 56px;
-    }
-    .gift-hero-body {
-        grid-column: 1;
-        grid-row: auto;
-        order: 0;
-    }
-    .giftcard-hero-cards {
-        grid-column: 1;
-        grid-row: auto;
-        order: -1;
-        min-height: 320px;
-    }
-}
-
-/* Homepage gift card section - 3-child grid, same clean pattern as giftcard hero */
-.landing-gift-grid {
+.footer-top {
     display: grid;
-    grid-template-columns: 0.72fr 1.28fr;
-    grid-template-rows: auto auto;
-    gap: clamp(28px, 5vw, 72px);
-    align-items: start;
-    max-width: 1440px;
-    margin: 0 auto;
+    grid-template-columns: 1.6fr 1fr 1fr 1.2fr;
+    gap: var(--space-md);
+    margin-bottom: var(--space-md);
 }
-.landing-gift-head {
-    grid-column: 1;
-    grid-row: 1;
+.footer-logo {
+    width: auto;
+    height: 54px;
+    margin-bottom: var(--space-xs);
+    /* The mark is solid brand blue; on the blue floor it must be knocked out
+       to white to read at all. */
+    filter: brightness(0) invert(1);
 }
-.landing-gift-body {
-    grid-column: 1;
-    grid-row: 2;
+.footer-tagline {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    color: var(--brand-white) !important;
+    margin-bottom: 6px;
 }
-.landing-gift-cards {
-    grid-column: 2;
-    grid-row: 1 / 3;
+.footer-tagline .script-accent {
+    font-size: 1.9rem;
+    display: inline-block;
+    vertical-align: -0.12em;
+    margin-left: 4px;
 }
-@media (max-width: 768px) {
-    .landing-gift-grid {
-        grid-template-columns: 1fr;
-        grid-template-rows: auto;
-    }
-    .landing-gift-head {
-        grid-column: 1;
-        grid-row: auto;
-        order: -2;
-        padding-bottom: 40px;
-    }
-    .landing-gift-body {
-        grid-column: 1;
-        grid-row: auto;
-        order: 0;
-    }
-    .landing-gift-cards {
-        grid-column: 1;
-        grid-row: auto;
-        order: -1;
-        padding: 48px 0 56px 0;
-    }
+.footer-note {
+    font-size: 0.9rem;
+    max-width: 34ch;
+    margin-bottom: var(--space-sm);
 }
 
-/* ============================================================
-   Feathered media frames
-   Video/media that dissolves into the page instead of sitting as a hard
-   outlined rectangle - a soft alpha mask fades all four edges. Pair with a
-   diffuse ambient shadow (.media-soft) for weight without a visible border.
-   ============================================================ */
+.footer-col h4 {
+    font-family: var(--font-sans);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--brand-orange);
+    margin-bottom: var(--space-xs);
+}
+.footer-col ul { list-style: none; }
+.footer-link {
+    display: inline-block;
+    padding: 7px 0;
+    font-size: 0.92rem;
+    color: var(--brand-powder);
+    text-decoration: none;
+    transition: color 0.3s var(--ease);
+}
+.footer-link:hover, .footer-link:focus-visible { color: var(--brand-orange); }
+.footer-hours {
+    margin-top: var(--space-xs);
+    font-size: 0.85rem;
+    line-height: 1.9;
+    color: color-mix(in srgb, var(--brand-powder) 78%, transparent);
+}
+
+.footer-divider {
+    height: 1px;
+    background: var(--border-on-deep);
+    margin-bottom: var(--space-sm);
+}
+.footer-bottom {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs) var(--space-sm);
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+    color: color-mix(in srgb, var(--brand-powder) 70%, transparent);
+}
+.footer-legal { display: flex; gap: var(--space-sm); }
+.footer-legal a {
+    color: inherit;
+    text-decoration: none;
+    padding: 6px 0;
+}
+.footer-legal a:hover { color: var(--brand-orange); }
+
+@media (max-width: 900px) {
+    .footer-top { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 560px) {
+    .footer-top { grid-template-columns: 1fr; gap: var(--space-sm); }
+    .footer-bottom { justify-content: flex-start; }
+}
+
+/* ============================================================================
+   PATTERN SYSTEM
+   ------------------------------------------------------------
+   Three marks, three jobs. Using one everywhere flattened the page; each of
+   these does something the others cannot.
+
+     .lattice   the Thai prajam yam tile, redrawn from the client's own
+                artwork. A repeating field - it gives a SOLID surface texture
+                without competing with content, so it belongs on the flat
+                sections: the menu list, locations, the gallery, the footer.
+
+     .lotus--mandala   the geometric quatrefoil (Lotus Single White.svg).
+                Architectural and symmetrical. Reads as structure.
+
+     .lotus--bloom     the botanical lotus (Lotus.webp) - hand-drawn petals
+                and leaves, organic and asymmetric. Reads as ornament.
+
+   A section takes ONE of these, never two. The lotus marks are placed off
+   centre and bleed past the edge so they read as a crop of something larger
+   rather than a logo dropped in the middle.
+   ============================================================================ */
+
+.lattice, .lotus { position: relative; }
+.lattice > *, .lotus > * { position: relative; z-index: 1; }
+
+.lattice::before,
+.lotus::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    background-color: var(--brand-blue);
+}
+
+/* ── The repeating tile, for solid surfaces ───────────────────────────── */
+.lattice::before {
+    -webkit-mask-image: url('/assets/patterns/thai-lattice.svg');
+    mask-image: url('/assets/patterns/thai-lattice.svg');
+    -webkit-mask-size: 96px 96px;
+    mask-size: 96px 96px;
+    -webkit-mask-repeat: repeat;
+    mask-repeat: repeat;
+    opacity: 0.05;
+}
+.lattice--deep::before  { background-color: var(--brand-white); opacity: 0.05; }
+.lattice--warm::before  { background-color: var(--brand-blue);  opacity: 0.06; }
+.lattice--quiet::before { opacity: 0.03; }
+
+/* ── The geometric mandala ────────────────────────────────────────────── */
+.lotus--mandala::before {
+    -webkit-mask-image: url('/assets/Background-20260709T183540Z-2-001/Background/Lotus/Lotus Single White.svg');
+    mask-image: url('/assets/Background-20260709T183540Z-2-001/Background/Lotus/Lotus Single White.svg');
+    -webkit-mask-size: auto 132%;
+    mask-size: auto 132%;
+    -webkit-mask-position: 86% center;
+    mask-position: 86% center;
+    opacity: 0.03;
+}
+
+/* ── The botanical bloom ──────────────────────────────────────────────── */
+.lotus--bloom::before {
+    -webkit-mask-image: url('/assets/Background-20260709T183540Z-2-001/Background/Lotus/Lotus.webp');
+    mask-image: url('/assets/Background-20260709T183540Z-2-001/Background/Lotus/Lotus.webp');
+    -webkit-mask-size: auto 118%;
+    mask-size: auto 118%;
+    -webkit-mask-position: 14% 42%;
+    mask-position: 14% 42%;
+    opacity: 0.07;
+}
+.lotus--bloom.lotus--right::before {
+    -webkit-mask-position: 88% 42%;
+    mask-position: 88% 42%;
+}
+
+/* Ink overrides for the marks, per surface. */
+.lotus--deep::before { background-color: var(--brand-white); opacity: 0.04; }
+.lotus--sand::before { background-color: var(--brand-orange); opacity: 0.08; }
+
+@media (max-width: 760px) {
+    .lotus--mandala::before,
+    .lotus--bloom::before {
+        -webkit-mask-size: auto 78%;
+        mask-size: auto 78%;
+        -webkit-mask-position: center;
+        mask-position: center;
+    }
+    .lattice::before { -webkit-mask-size: 76px 76px; mask-size: 76px 76px; }
+}
+
+/* ============================================================================
+   FEATHERED MEDIA
+   ------------------------------------------------------------
+   Photography and footage dissolve into the surface instead of sitting in a
+   hard rounded rectangle. Two crossed linear-gradient masks, intersected, fade
+   all four edges - so the corners blur out and the image reads as part of the
+   page rather than pasted onto it. Carried over from the original build; it is
+   the single most characterful thing about how media is handled here.
+   ============================================================================ */
+
 .media-feather {
     -webkit-mask-image:
         linear-gradient(to right, transparent 0, #000 7%, #000 93%, transparent 100%),
@@ -1334,29 +1511,7 @@ select.premium-input {
         linear-gradient(to bottom, transparent 0, #000 9%, #000 91%, transparent 100%);
     mask-composite: intersect;
 }
-.media-soft {
-    box-shadow: 0 40px 90px rgba(0, 0, 0, 0.5);
-}
-
-/* ============================================================
-   Section spacing scale - one rhythm for every section's vertical padding,
-   replacing ad-hoc px values scattered across pages. Built on --space-macro
-   so it already flexes down at the tablet/mobile breakpoints below.
-   ============================================================ */
-.section-pad   { padding-top: var(--space-macro); padding-bottom: var(--space-macro); }
-.section-pad-t { padding-top: var(--space-macro); }
-.section-pad-b { padding-bottom: var(--space-macro); }
-
-/* ============================================================
-   Image blend treatment - same intersecting linear-gradient mask
-   as the Chapter II video (.media-feather), with rounded corners.
-   The fade zone is opened wider for still photographs so the
-   dissolve into the nocturnal background reads clearly at every
-   size; narrow 7-9% windows that work on full-bleed video are
-   imperceptible on smaller editorial stills.
-   ============================================================ */
 .img-feather {
-    border-radius: var(--radius-lg);
     -webkit-mask-image:
         linear-gradient(to right, transparent 0, #000 15%, #000 85%, transparent 100%),
         linear-gradient(to bottom, transparent 0, #000 18%, #000 82%, transparent 100%);
@@ -1367,310 +1522,1252 @@ select.premium-input {
     mask-composite: intersect;
 }
 
-/* ============================================================
-   Section dissolve - hard horizontal cuts between sections
-   become soft editorial transitions. Each section's top edge
-   fades in from noir and its bottom edge dissolves back,
-   matching the .media-feather / .img-feather dissolve language.
-   ============================================================ */
-.section-blend-top,
-.section-blend-bottom {
-    position: absolute;
-    left: 0;
-    width: 100%;
-    z-index: 1;
-    pointer-events: none;
-}
-.section-blend-top {
-    top: 0;
-    height: 120px;
-    background: linear-gradient(to bottom, var(--color-surface-base) 0%, transparent 100%);
-}
-.section-blend-bottom {
-    bottom: 0;
-    height: 120px;
-    background: linear-gradient(to top, var(--color-surface-base) 0%, transparent 100%);
-}
+/* ============================================================================
+   THE FOOD - quick picks, category strip
+   ------------------------------------------------------------
+   Under the signature plate, five more dishes at a glance with prices. Small,
+   dense and scannable on purpose: this is the part of the page that answers
+   "what do they do and what does it cost" in about three seconds. White cards
+   on the orange band, matching the menu page, so the pattern is learned once.
+   ============================================================================ */
 
-/* ============================================================
-   Footer - compact, dark, gradient-free. A restrained sign-off: a small
-   wordmark, a line of intent, structured nav, and a thin rule. No glow, no
-   giant watermark - deliberately contained in height.
-   ============================================================ */
-.site-footer {
-    position: relative;
-    overflow: hidden;
-    background: #0A0401;
-    border-top: 1px solid rgba(255, 255, 255, 0.04);
-    padding: clamp(44px, 5vw, 68px) 0 22px;
-}
-/* Faint lotus/lattice texture so the footer reads as a designed close, not a
-   flat dull band. No gradient - a solid low-opacity image wash. */
-.site-footer::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background-image: url('/assets/Background-20260709T183540Z-2-001/Background/Lotus/Lotus BG.webp');
-    background-size: cover;
-    background-position: center;
-    opacity: 0.05;
-    pointer-events: none;
-    z-index: 0;
-}
-.site-footer__inner { position: relative; z-index: 2; }
-.footer-top {
+.picks {
     display: grid;
-    grid-template-columns: 1.7fr 1fr 1fr 1.1fr;
-    gap: 30px 48px;
-    padding-bottom: 34px;
+    grid-template-columns: repeat(5, 1fr);
+    gap: clamp(12px, 1.4vw, 20px);
+    margin-top: clamp(40px, 5vw, 72px);
 }
-.footer-logo {
-    height: 50px;
-    width: auto;
-    margin-bottom: 18px;
-    /* recolour the navy mark to warm cream so it reads on the dark ground */
-    filter: brightness(0) invert(1);
-    opacity: 0.9;
+.pick {
+    background: var(--brand-white);
+    border-radius: var(--radius-lg);
+    padding: 14px 14px 16px;
+    text-align: center;
+    transition: transform 0.35s var(--ease), box-shadow 0.35s var(--ease);
 }
-.footer-tagline {
-    color: rgba(253, 251, 247, 0.6);
-    font-size: 0.96rem;
-    line-height: 1.55;
-    max-width: 32ch;
-    margin-bottom: 20px;
-    text-wrap: pretty;
+.pick:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+.pick__media { position: relative; margin-bottom: 8px; }
+.pick__media .dish { aspect-ratio: 1 / 1; }
+.pick__name {
+    font-family: var(--font-display);
+    font-size: 0.98rem;
+    line-height: 1.25;
+    color: var(--brand-blue);
+    margin-bottom: 3px;
 }
-.footer-reserve {
-    display: inline-block;
-    color: var(--color-primary);
+.pick__price {
     font-family: var(--font-sans);
     font-size: 0.82rem;
-    font-weight: 600;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    text-decoration: none;
-    padding: 8px 0;
-    border: none;
-    border-bottom: 1px solid rgba(240, 139, 67, 0.4);
-    background: none;
-    cursor: pointer;
-    transition: color 0.3s ease, border-color 0.3s ease;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--text-secondary) !important;
+    margin: 0 !important;
 }
-.footer-reserve:hover,
-.footer-reserve:focus-visible { color: #ffab5e; border-color: #ffab5e; }
-.footer-outlets {
-    margin-top: 22px;
-    color: rgba(253, 251, 247, 0.5);
-    font-size: 0.76rem;
-    letter-spacing: 0.16em;
-    text-transform: uppercase;
+
+/* Category strip - the fastest route into a 75-item menu is by craving, not
+   by scrolling. Each chip lands on the right anchor inside the menu page. */
+.food-actions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-top: clamp(36px, 4vw, 56px);
 }
-.footer-col h4 {
+.food-cats {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+}
+.food-cat {
+    display: inline-block;
+    padding: 9px 18px;
+    border-radius: var(--radius-pill);
+    border: 1.5px solid var(--brand-blue);
     font-family: var(--font-sans);
     font-size: 0.7rem;
-    letter-spacing: 0.2em;
+    font-weight: 700;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: var(--color-primary);
-    margin-bottom: 10px;
-    font-weight: 600;
-}
-.footer-col ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; }
-.footer-link {
-    color: rgba(253, 251, 247, 0.78);
+    color: var(--brand-blue);
     text-decoration: none;
-    font-size: 0.95rem;
-    display: inline-block;
-    padding: 4px 0;
-    transition: color 0.3s ease;
+    transition: background-color 0.3s var(--ease), color 0.3s var(--ease);
 }
-.footer-link:hover,
-.footer-link:focus-visible { color: var(--color-primary); }
-.footer-hours { color: rgba(253, 251, 247, 0.66); font-size: 0.92rem; display: inline-block; padding: 4px 0; }
-.footer-divider { height: 1px; background: var(--color-border); }
-.footer-bottom {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 14px;
-    padding-top: 22px;
-    color: rgba(253, 251, 247, 0.45);
-    font-size: 0.8rem;
+.food-cat:hover, .food-cat:focus-visible {
+    background: var(--brand-blue);
+    color: var(--brand-white);
 }
-.footer-legal { display: flex; gap: 24px; }
-.footer-legal a {
-    color: inherit;
-    text-decoration: none;
-    padding: 4px 0;
-    transition: color 0.3s ease;
-}
-.footer-legal a:hover,
-.footer-legal a:focus-visible { color: rgba(253, 251, 247, 0.8); }
+
 @media (max-width: 900px) {
-    .footer-top { grid-template-columns: 1fr 1fr; gap: 36px 32px; }
-    .footer-brand { grid-column: 1 / 3; }
+    .picks { grid-template-columns: repeat(3, 1fr); }
 }
 @media (max-width: 560px) {
-    .footer-top { grid-template-columns: 1fr 1fr; }
-    .footer-brand { grid-column: 1 / 3; }
-    .footer-bottom { justify-content: flex-start; }
+    .picks { grid-template-columns: repeat(2, 1fr); }
+    .pick__name { font-size: 0.88rem; }
 }
 
-/* --- Mobile Responsiveness Adjustments --- */
-.location-card-container {
-    position: relative;
-    width: 100vw;
-    height: 100vh;
-    min-height: 800px;
-    display: flex;
+/* ============================================================================
+   GIFT CARDS
+   ============================================================================ */
+
+.gift {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     align-items: center;
-    margin-left: calc(50% - 50vw);
+    gap: clamp(32px, 5vw, 72px);
+}
+.gift__copy p { margin-bottom: var(--space-sm); max-width: 44ch; color: var(--text-secondary); }
+.gift__copy .display-2 { color: var(--text-heading); }
+.gift__list li { color: var(--text-primary); }
+.gift__list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: var(--space-md);
+}
+.gift__list li {
+    position: relative;
+    padding-left: 22px;
+    font-size: 0.95rem;
+}
+.gift__list li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.62em;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--brand-orange);
 }
 
-.location-card-image-wrapper {
+/* The saffron brush sweep behind the card stack. Three copies of the same
+   stroke, rotated and offset, read as one continuous painted curve - the same
+   composition the previous build used, which is the most characterful thing in
+   this section. Sits behind the cards, never over them. */
+.gift__brush {
     position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
+    inset: 0;
     z-index: 0;
-}
-
-.location-card-content {
-    position: relative;
-    z-index: 2;
+    pointer-events: none;
+    opacity: 0.95;
+    /* Centre stroke. The three pieces share one anchor scheme - centred on a
+       point, then rotated - so their tails overlap into a single continuous
+       sweep rising left to right, rather than three separate blobs. */
+    top: 50%;
+    left: 50%;
+    right: auto;
+    bottom: auto;
     width: 100%;
-    max-width: 700px;
-    padding: 0 8vw;
+    height: 100%;
+    transform: translate(-50%, -50%) rotate(-45deg) scale(1.4);
+}
+.gift__brush--b {
+    top: 70%;
+    left: 35%;
+    transform: translate(-50%, -50%) rotate(-30deg) scale(1.3);
+}
+.gift__brush--c {
+    top: 30%;
+    left: 65%;
+    transform: translate(-50%, -50%) rotate(-60deg) scale(1.3);
 }
 
-.location-card-gradient {
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    z-index: 1;
-}
-
-.location-card-gradient.align-left {
-    background: linear-gradient(to right, rgba(5, 7, 10, 0.98) 0%, rgba(5, 7, 10, 0.7) 45%, rgba(5, 7, 10, 0) 100%);
-}
-
-.location-card-gradient.align-right {
-    background: linear-gradient(to left, rgba(5, 7, 10, 0.98) 0%, rgba(5, 7, 10, 0.7) 45%, rgba(5, 7, 10, 0) 100%);
-}
-
-.section-reservation {
+.gift__cards {
     position: relative;
-    overflow: hidden;
-    padding: 160px 0;
+    min-height: 340px;
     display: flex;
     align-items: center;
     justify-content: center;
 }
+/* Two denominations, so both cards have to be readable. The offsets were
+   previously ~11%, which buried the 3,000 card almost entirely behind the
+   1,500 - the section then showed one card and claimed two. */
+.gift__card {
+    position: absolute;
+    z-index: 1;
+    width: min(66%, 360px);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: 0 24px 52px rgba(0, 0, 0, 0.45);
+    transition: transform 0.6s var(--ease);
+}
+.gift__card img { width: 100%; height: auto; }
+.gift__card--back  { transform: rotate(-7deg) translate(-30%, -17%); }
+.gift__card--front { transform: rotate(5deg) translate(24%, 15%); }
+.gift:hover .gift__card--back  { transform: rotate(-9deg) translate(-34%, -20%); }
+.gift:hover .gift__card--front { transform: rotate(7deg) translate(28%, 18%); }
+
+@media (max-width: 900px) {
+    .gift { grid-template-columns: 1fr; }
+    .gift__cards { order: -1; min-height: 260px; }
+}
+
+/* ============================================================================
+   LOCATIONS
+   ------------------------------------------------------------
+   Three rooms on the deep-blue band, presented the same way the gallery is:
+   the photograph is the object, the type sits under it. The previous version
+   was a white card with a border, a badge and a stacked definition list - it
+   read as a directory listing dropped into a restaurant site, and it was the
+   one place on the page that looked like a template. There is no card chrome
+   here now; the image carries the weight.
+   ============================================================================ */
+
+.loc-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: clamp(20px, 2.5vw, 36px);
+    align-items: stretch;
+}
+
+.loc-card {
+    display: flex;
+    flex-direction: column;
+    background: none;
+    border: 0;
+    box-shadow: none;
+}
+
+.loc-card__media {
+    position: relative;
+    aspect-ratio: 4 / 5;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--space-xs);
+    background: color-mix(in srgb, var(--brand-white) 10%, transparent);
+}
+.loc-card__media img {
+    transition: transform 0.7s var(--ease);
+}
+.loc-card:hover .loc-card__media img { transform: scale(1.05); }
+/* A blue wash rising from the bottom so the label always reads, without
+   dimming the whole photograph the way a full-frame scrim would. */
+.loc-card__media::after {
+    content: "";
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 55%;
+    z-index: 1;
+    pointer-events: none;
+    background: linear-gradient(to top,
+        color-mix(in srgb, var(--brand-blue) 92%, transparent) 0%,
+        transparent 100%);
+}
+
+/* The positioning label sits on the image, in the brand's own orange. */
+.loc-card__type {
+    position: absolute;
+    left: 16px;
+    bottom: 14px;
+    z-index: 2;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--brand-orange);
+}
+
+.loc-card__body {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    padding: 0 2px;
+}
+.loc-card__name {
+    font-size: clamp(1.4rem, 2vw, 1.8rem);
+    color: var(--brand-white);
+    margin-bottom: 6px;
+}
+.loc-card__address {
+    font-style: normal;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--brand-powder);
+    margin-bottom: var(--space-xs);
+}
+
+/* Hours and phone as a quiet two-line block, not a bordered data table. */
+.loc-card__meta {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: var(--space-sm);
+    flex: 1;
+}
+.loc-card__meta dt {
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--brand-powder) 62%, transparent);
+    margin-bottom: 1px;
+}
+.loc-card__meta dd { font-size: 0.86rem; color: var(--brand-powder); }
+.loc-card__meta dd span { display: block; }
+.loc-card__meta dd a {
+    display: inline-block;
+    padding-block: 4px;
+    text-decoration: none;
+}
+.loc-card__meta dd a:hover { color: var(--brand-orange); }
+
+.loc-card__actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+@media (max-width: 1080px) {
+    .loc-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px) {
+    .loc-grid { grid-template-columns: 1fr; gap: var(--space-md); }
+    .loc-card__media { aspect-ratio: 16 / 10; }
+}
+
+/* ============================================================================
+   CONTACT
+   ============================================================================ */
+
+.contact {
+    position: relative;
+    overflow: hidden;
+    background-color: var(--brand-blue);
+}
+.contact__video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 42%;
+    z-index: 0;
+    filter: saturate(0.78);
+}
+/* Same treatment as the hero: a brand-blue veil so the section reads as Khao
+   San blue, plus a band behind the copy. The closing invitation has to be the
+   most legible thing on the page - it is the call to action. */
+.contact__scrim {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background:
+        radial-gradient(ellipse 74% 62% at 50% 50%,
+            color-mix(in srgb, var(--brand-blue) 82%, transparent) 0%,
+            color-mix(in srgb, var(--brand-blue) 46%, transparent) 60%,
+            transparent 84%),
+        linear-gradient(color-mix(in srgb, var(--brand-blue) 58%, transparent),
+                        color-mix(in srgb, var(--brand-blue) 58%, transparent));
+}
+.contact__inner {
+    position: relative;
+    z-index: 2;
+    max-width: 56ch;
+    margin-inline: auto;
+    text-align: center;
+}
+.contact__inner p { margin-bottom: var(--space-md); }
+.contact__inner .display-2 { color: var(--brand-white); }
+.contact__inner p:not(.overline) { color: var(--brand-powder); }
+
+/* ============================================================================
+   FOOTER
+   ============================================================================ */
+
+.site-footer {
+    position: relative;
+    background-color: var(--surface-deep);
+    padding-block: var(--space-lg) var(--space-sm);
+    overflow: hidden;
+}
+.site-footer__inner { position: relative; z-index: 1; }
+
+.footer-top {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr 1fr 1.2fr;
+    gap: var(--space-md);
+    margin-bottom: var(--space-md);
+}
+.footer-logo {
+    width: auto;
+    height: 54px;
+    margin-bottom: var(--space-xs);
+    /* The mark is solid brand blue; on the blue floor it must be knocked out
+       to white to read at all. */
+    filter: brightness(0) invert(1);
+}
+.footer-tagline {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    color: var(--brand-white) !important;
+    margin-bottom: 6px;
+}
+.footer-tagline .script-accent {
+    font-size: 1.9rem;
+    display: inline-block;
+    vertical-align: -0.12em;
+    margin-left: 4px;
+}
+.footer-note {
+    font-size: 0.9rem;
+    max-width: 34ch;
+    margin-bottom: var(--space-sm);
+}
+
+.footer-col h4 {
+    font-family: var(--font-sans);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--brand-orange);
+    margin-bottom: var(--space-xs);
+}
+.footer-col ul { list-style: none; }
+.footer-link {
+    display: inline-block;
+    padding: 7px 0;
+    font-size: 0.92rem;
+    color: var(--brand-powder);
+    text-decoration: none;
+    transition: color 0.3s var(--ease);
+}
+.footer-link:hover, .footer-link:focus-visible { color: var(--brand-orange); }
+.footer-hours {
+    margin-top: var(--space-xs);
+    font-size: 0.85rem;
+    line-height: 1.9;
+    color: color-mix(in srgb, var(--brand-powder) 78%, transparent);
+}
+
+.footer-divider {
+    height: 1px;
+    background: var(--border-on-deep);
+    margin-bottom: var(--space-sm);
+}
+.footer-bottom {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs) var(--space-sm);
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+    color: color-mix(in srgb, var(--brand-powder) 70%, transparent);
+}
+.footer-legal { display: flex; gap: var(--space-sm); }
+.footer-legal a {
+    color: inherit;
+    text-decoration: none;
+    padding: 6px 0;
+}
+.footer-legal a:hover { color: var(--brand-orange); }
+
+@media (max-width: 900px) {
+    .footer-top { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 560px) {
+    .footer-top { grid-template-columns: 1fr; gap: var(--space-sm); }
+    .footer-bottom { justify-content: flex-start; }
+}
+
+/* ============================================================================
+   MENU PAGE
+   ============================================================================ */
+
+/* Menu hero - copy on one side, a layered cluster of plates on the other.
+   One hero dish with two satellites at different scales and depths, so the
+   page opens on a composed still life instead of a banner with a headline. */
+.menu-hero {
+    position: relative;
+    background-color: var(--brand-blue);
+    overflow: hidden;
+    padding-block: calc(var(--header-h) + 56px) var(--space-lg);
+    min-height: 88vh;
+    display: flex;
+    align-items: center;
+}
+.menu-hero__inner {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 1200px;
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+    display: grid;
+    grid-template-columns: 1.02fr 0.98fr;
+    gap: clamp(24px, 4vw, 72px);
+    align-items: center;
+}
+.menu-hero__copy { position: relative; z-index: 2; }
+.menu-hero__title {
+    font-family: var(--font-display);
+    font-size: clamp(2.4rem, 5vw, 4rem);
+    line-height: 1.02;
+    color: var(--brand-white);
+    margin-bottom: var(--space-xs);
+}
+.menu-hero__script {
+    display: block;
+    font-size: clamp(3rem, 7vw, 5.4rem);
+    margin-top: 0.06em;
+    color: var(--brand-butter);
+}
+.menu-hero__lede {
+    color: var(--brand-powder);
+    max-width: 44ch;
+    margin-bottom: var(--space-xs);
+}
+.menu-hero__count {
+    color: var(--brand-orange);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    font-size: 0.85rem;
+    margin-bottom: var(--space-md);
+}
+.menu-hero__cue {
+    position: absolute;
+    left: 50%;
+    bottom: 22px;
+    transform: translateX(-50%);
+    z-index: 3;
+    opacity: 0.6;
+}
+
+/* The cluster. Absolute placement at three scales, with the back plate dimmed
+   and cooled and the front plate crisp, so it occupies real depth rather than
+   reading as three cut-outs on one plane. */
+.menu-hero__stage { position: relative; z-index: 1; width: 100%; }
+.menu-hero__cluster {
+    position: relative;
+    width: 100%;
+    max-width: 620px;
+    margin-left: auto;
+    aspect-ratio: 1 / 1;
+}
+/* A soft warm pool the plates float in. */
+.menu-hero__cluster::before {
+    content: "";
+    position: absolute;
+    inset: 6% 2% 10% 2%;
+    z-index: 0;
+    pointer-events: none;
+    filter: blur(6px);
+    background: radial-gradient(ellipse 58% 52% at 52% 44%,
+        color-mix(in srgb, var(--brand-orange) 26%, transparent) 0%,
+        color-mix(in srgb, var(--brand-orange) 8%, transparent) 42%,
+        transparent 72%);
+}
+.menu-hero__cluster .mh-dish { position: absolute; width: auto; aspect-ratio: 1 / 1; }
+.menu-hero__cluster .mh-dish--hero  { width: 74%; top: 6%; right: 3%; z-index: 2; }
+.menu-hero__cluster .mh-dish--sat-a { width: 40%; left: 0; bottom: 5%; z-index: 3; }
+.menu-hero__cluster .mh-dish--sat-b { width: 31%; top: 0; left: 15%; z-index: 1; }
+.menu-hero__cluster .mh-dish--sat-b .dish-img {
+    filter: drop-shadow(0 18px 26px rgba(0, 0, 0, 0.42)) brightness(0.86) saturate(0.92);
+}
+
+/* Plates suspended in space rather than resting on a surface: the contact
+   shadow drops away below and a wider ambient glow lifts them off the blue. */
+.dish--float::after {
+    left: 24%;
+    right: 24%;
+    bottom: 1%;
+    height: 8%;
+    filter: blur(12px);
+    background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.2) 42%, transparent 80%);
+}
+.dish--float .dish-img {
+    filter:
+        drop-shadow(0 2px 1px rgba(255, 246, 232, 0.24))
+        drop-shadow(0 24px 30px rgba(0, 0, 0, 0.46))
+        drop-shadow(0 10px 16px rgba(0, 0, 0, 0.34));
+}
+
+@media (max-width: 860px) {
+    .menu-hero { min-height: 0; padding-block: calc(var(--header-h) + 40px) var(--space-md); }
+    .menu-hero__inner { grid-template-columns: 1fr; gap: var(--space-sm); }
+    .menu-hero__stage { order: -1; }
+    .menu-hero__cluster { max-width: 380px; margin: 0 auto; aspect-ratio: 4 / 3; }
+    .menu-hero__cluster .mh-dish--hero  { width: 70%; top: 4%; right: 6%; }
+    .menu-hero__cluster .mh-dish--sat-a { width: 40%; left: 2%; bottom: 0; }
+    .menu-hero__cluster .mh-dish--sat-b { display: none; }
+    .menu-hero__cue { display: none; }
+}
+
+
+/* Sticky category bar. Sits directly under the header and stays there for the
+   whole list, so the reader always knows where they are and can jump. */
+.menu-nav {
+    position: relative;
+    position: sticky;
+    top: var(--header-h);
+    z-index: 40;
+    background-color: color-mix(in srgb, var(--brand-white) 94%, transparent);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--border-soft);
+}
+.menu-nav__scroll {
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    padding: 10px var(--gutter);
+    max-width: 1200px;
+    margin-inline: auto;
+}
+.menu-nav__scroll::-webkit-scrollbar { display: none; }
+/* Signals that the bar scrolls - otherwise the last pill just looks clipped. */
+.menu-nav::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 56px;
+    pointer-events: none;
+    background: linear-gradient(to right, transparent, var(--brand-white) 78%);
+}
+.menu-nav__item {
+    flex-shrink: 0;
+    border: none;
+    background: transparent;
+    border-radius: var(--radius-pill);
+    padding: 9px 18px;
+    font-family: var(--font-sans);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    text-decoration: none;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color 0.3s var(--ease), color 0.3s var(--ease);
+}
+.menu-nav__item:hover {
+    background-color: color-mix(in srgb, var(--brand-orange) 22%, var(--brand-white));
+    color: var(--brand-blue);
+}
+.menu-nav__item[aria-current="true"] {
+    background-color: var(--brand-blue);
+    color: var(--brand-white);
+}
+
+/* Categories need real air between them, otherwise the next heading sits flush
+   against the previous row of cards and the list reads as one undifferentiated
+   run. The first category keeps its own top spacing from the section. */
+/* The sticky bar already separates the hero from the list, so the list
+   does not need a full section's worth of padding above it as well. */
+.menu-list { padding-top: clamp(40px, 4vw, 64px); }
+
+.menu-category { scroll-margin-top: calc(var(--header-h) + 64px); }
+.menu-category + .menu-category { margin-top: var(--space-lg); }
+.menu-category__head {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-xs);
+    padding-bottom: var(--space-xs);
+    margin-bottom: var(--space-sm);
+    border-bottom: 3px solid var(--brand-orange);
+}
+.menu-category__head h2 {
+    font-size: clamp(1.6rem, 3.4vw, 2.4rem);
+    margin: 0;
+}
+.menu-category__count {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+}
+
+/* ── Dish cards ──────────────────────────────────────────────────────────
+   The previous layout had no card at all: an image and some text in a grid
+   with an 8vw column gap and a 120px stagger offset per column, so items
+   floated with no relationship to each other and the page ran enormously
+   long. Each dish is now a real card - a bounded object with its own ground,
+   border and hover - which is what makes a 75-item list scannable.
+   ──────────────────────────────────────────────────────────────────────── */
+
+.menu-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(268px, 1fr));
+    gap: var(--space-xs);
+}
+
+.menu-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    background: var(--brand-white);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    transition: transform 0.35s var(--ease), box-shadow 0.35s var(--ease),
+                border-color 0.35s var(--ease);
+}
+.menu-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+    border-color: var(--brand-orange);
+}
+
+.menu-card__media {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    background: var(--surface-tint);
+    padding: 8%;
+}
+.menu-card__badges {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 3;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    max-width: calc(100% - 20px);
+}
+.menu-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-radius: var(--radius-pill);
+    padding: 4px 9px;
+    color: var(--brand-blue);
+    background: var(--brand-white);
+    border: 1px solid var(--border-soft);
+    box-shadow: var(--shadow-sm);
+}
+.menu-badge--spicy    { background: color-mix(in srgb, var(--brand-orange) 70%, var(--brand-white)); border-color: transparent; }
+.menu-badge--special  { background: color-mix(in srgb, var(--brand-butter) 80%, var(--brand-white)); border-color: transparent; }
+.menu-badge--featured { background: var(--brand-blue); color: var(--brand-white); border-color: transparent; }
+.menu-badge--new      { background: color-mix(in srgb, var(--brand-powder) 85%, var(--brand-white)); border-color: transparent; }
+
+.menu-card__body {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    padding: var(--space-xs);
+    gap: 6px;
+}
+/* Title and price share a baseline row, so every price in the grid sits on the
+   same optical line as its dish name and the column scans vertically. */
+.menu-card__top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+}
+.menu-card__title {
+    font-family: var(--font-display);
+    font-size: 1.02rem;
+    line-height: 1.28;
+    font-weight: 700;
+    color: var(--brand-blue);
+    margin: 0;
+}
+/* The printed menu's item number, kept so guests can order by it. Set in the
+   sans and muted: present for reference, never competing with the dish name. */
+.menu-card__num {
+    font-family: var(--font-sans);
+    font-size: 0.72rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.06em;
+    /* Muted grey, not orange: this is small text on white, where orange is
+       2.16:1 and fails. Secondary ink holds 7.7:1 and still recedes. */
+    color: var(--text-secondary);
+    margin-right: 7px;
+}
+.menu-card__portion {
+    display: block;
+    font-family: var(--font-sans);
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    color: var(--text-secondary);
+    margin-top: 2px;
+}
+/* Prices are set in the sans, not the display face: numerals stay tabular and
+   aligned, and it sidesteps the demo font's watermarked digits entirely. */
+.menu-card__price {
+    flex-shrink: 0;
+    font-family: var(--font-sans);
+    font-size: 0.95rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--brand-blue);
+    white-space: nowrap;
+}
+.menu-card__price small {
+    display: block;
+    font-size: 0.66rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-align: right;
+}
+.menu-card__desc {
+    font-size: 0.85rem;
+    line-height: 1.62;
+    color: var(--text-secondary);
+    text-wrap: pretty;
+}
+.menu-card__addon {
+    font-size: 0.76rem;
+    font-style: italic;
+    color: var(--brand-blue);
+    margin-top: auto;
+    padding-top: 6px;
+}
+
+/* Add-ons appended to a category. */
+.menu-addons {
+    margin-top: var(--space-sm);
+    padding: var(--space-xs) var(--space-sm);
+    background: var(--surface-tint);
+    border-radius: var(--radius-md);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 8px var(--space-sm);
+}
+.menu-addons__label {
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--brand-blue);
+}
+.menu-addons__item { font-size: 0.86rem; color: var(--text-secondary); }
+.menu-addons__item b {
+    color: var(--brand-blue);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Closing terms block. */
+.menu-terms { background: var(--surface-tint); }
+.menu-terms ul {
+    list-style: none;
+    columns: 2;
+    column-gap: var(--space-md);
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 2;
+}
+.menu-terms__legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: var(--space-sm);
+}
+@media (max-width: 640px) {
+    .menu-terms ul { columns: 1; }
+}
+
+
+/* ── Phone-only contextual rail ──────────────────────────────────────────
+   A document outline you steer by feel. On phones the horizontal pill bar is
+   a poor fit for a 16,000px page - it sits at the top, out of thumb reach,
+   and shows four of fourteen categories. This is a slim fixed rail of dashes
+   on the right edge: drag a thumb down it and entries magnify under the
+   touch, release or tap to jump. It never covers the food, and it is always
+   reachable one-handed. Hidden on desktop, where the pill bar owns the job.
+   ──────────────────────────────────────────────────────────────────────── */
+.menu-rail { display: none; }
+.menu-rail-backdrop { display: none; }
 
 @media (max-width: 768px) {
-    /* Compress Reservation Section to a cinematic wide crop on mobile */
-    .section-reservation {
-        padding: 64px 0;
-    }
-    
-    /* Rebuild LocationCard for Portrait Screens */
-    .location-card-container {
+    .menu-rail {
+        display: flex;
         flex-direction: column;
-        justify-content: flex-start;
-        align-items: flex-start;
-        height: auto;
-        min-height: auto;
+        align-items: flex-end;
+        position: fixed;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 60;
+        max-height: 78vh;
+        padding: 8px 6px 8px 16px;
+        touch-action: none;
+        user-select: none;
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
     }
-    
-    /* The photo takes the top portion, preserving aspect ratio */
-    .location-card-image-wrapper {
+    .menu-rail-item {
+        all: unset;
         position: relative;
-        height: 60vh;
-        width: 100vw;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding: 7px 0;
+        min-height: 26px;
+        cursor: pointer;
+        touch-action: none;
+        -webkit-tap-highlight-color: transparent;
+    }
+    .menu-rail-name {
+        position: absolute;
+        right: calc(100% + 14px);
+        top: 50%;
+        font-family: var(--font-display);
+        font-size: 1.05rem;
+        line-height: 1.05;
+        letter-spacing: 1px;
+        white-space: nowrap;
+        transform-origin: right center;
+        color: var(--brand-white);
+        pointer-events: none;
+        transition: opacity 0.35s var(--ease), transform 0.35s var(--ease);
+    }
+    .menu-rail-dash {
+        display: block;
+        height: 2px;
+        border-radius: 1px;
+        flex-shrink: 0;
+        pointer-events: none;
+        background: var(--brand-blue);
+        transition: width 0.35s var(--ease), opacity 0.35s var(--ease), background-color 0.3s ease;
+    }
+    .menu-rail-item[aria-current] .menu-rail-dash {
+        background: var(--brand-orange);
+        box-shadow: 0 0 10px color-mix(in srgb, var(--brand-orange) 70%, transparent);
     }
 
-    /* Gradient now serves as a soft floor fading up */
-    .location-card-gradient,
-    .location-card-gradient.align-left,
-    .location-card-gradient.align-right {
-        top: auto;
+    /* A blue scrim behind the rail. At rest it is a faint edge gradient so the
+       dashes never vanish against a white card; on touch it widens and
+       deepens so the labels sit on a solid, readable band. */
+    .menu-rail-backdrop {
+        display: block;
+        position: fixed;
+        right: 0;
+        top: 0;
         bottom: 0;
-        height: 50vh;
-        background: linear-gradient(to top, rgba(5, 7, 10, 1) 0%, rgba(5, 7, 10, 0.95) 40%, rgba(5, 7, 10, 0) 100%);
+        width: 54px;
+        z-index: 59;
+        pointer-events: none;
+        transition: width 0.3s ease, background 0.3s ease;
+        background: linear-gradient(to left,
+            color-mix(in srgb, var(--brand-blue) 30%, transparent), transparent);
+    }
+    .menu-rail-backdrop--active {
+        width: 150px;
+        background: linear-gradient(to left,
+            color-mix(in srgb, var(--brand-blue) 94%, transparent) 0%,
+            color-mix(in srgb, var(--brand-blue) 62%, transparent) 60%,
+            transparent 100%);
+    }
+    .menu-rail--active .menu-rail-dash { background: var(--brand-white); }
+    .menu-rail--active .menu-rail-item[aria-current] .menu-rail-dash { background: var(--brand-orange); }
+
+    /* The entry under the finger gets a solid pill so it reads over anything. */
+    .menu-rail--active .menu-rail-name {
+        background: var(--brand-orange);
+        color: var(--brand-blue);
+        font-weight: 700;
+        border-radius: var(--radius-sm);
+        padding: 5px 13px;
+        right: calc(100% + 18px);
+        box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
     }
 
-    .location-card-content {
-        text-align: left !important;
-        padding: 48px 24px;
-        background-color: rgba(5, 7, 10, 1);
-        margin-top: -120px; /* pull up over the gradient */
-    }
-    
-    .location-card-content p,
-    .location-card-content div {
-        margin-left: 0 !important;
-        margin-right: 0 !important;
-        align-items: flex-start !important;
-        justify-content: flex-start !important;
-    }
+    /* The pill bar is redundant once the rail is present. */
+    .menu-nav { display: none; }
 }
 
-/* Phase 8: Responsive Adaptation */
-
-/* Tablet (max-width: 1024px) */
-@media (max-width: 1024px) {
-    :root {
-        --space-macro: 72px;
-        --space-layout: 40px;
-    }
-    .container {
-        grid-template-columns: repeat(8, 1fr);
-        gap: 20px;
-        padding: 0 48px;
-    }
-}
-
-/* Mobile (max-width: 768px) */
-@media (max-width: 768px) {
-    :root {
-        --space-macro: 48px;
-        --space-layout: 24px;
-    }
-    .container {
-        grid-template-columns: repeat(4, 1fr);
-        gap: 16px;
-        padding: 0 24px;
-    }
-
-    .display-1 {
-        font-size: 3rem;
-    }
-    .display-2 {
-        font-size: 2.25rem;
-    }
-}
-
-/* Respect user motion preferences (WCAG 2.3.3) */
 @media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
+    .menu-rail-name, .menu-rail-dash { transition: none !important; }
+}
+
+/* ============================================================================
+   THE IGNITION
+   The opening ritual: on a first arrival at the homepage the room holds dark
+   while the mark draws itself in, then the veil lifts on a staggered entrance.
+   Once per browser session, homepage only, and skipped entirely under reduced
+   motion - the inline script in app/layout.tsx only ever sets
+   data-ignition="igniting" when all three are true, so nothing here needs its
+   own guard. Re-skinned from the old ember/fire treatment to brand blue.
+   ============================================================================ */
+
+.ignition-veil {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 300;
+    background: var(--brand-blue);
+    pointer-events: none;
+}
+html[data-ignition="igniting"] .ignition-veil {
+    display: block;
+    animation: ignitionVeilRecede 1s var(--ease) forwards;
+}
+.ignition-logo-container {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+}
+/* The mark is knocked out to white and lit with a warm orange bloom - the
+   brand's two colours doing the work the old fire filter used to. */
+.ignition-logo-wipe {
+    filter: brightness(0) invert(1)
+            drop-shadow(0 0 26px color-mix(in srgb, var(--brand-orange) 65%, transparent));
+}
+html[data-ignition="igniting"] .ignition-logo-container {
+    animation: ignitionLogoFade 0.8s var(--ease) 0.1s forwards;
+}
+html[data-ignition="igniting"] .ignition-logo-wipe {
+    animation: ignitionWipe 0.5s cubic-bezier(0.7, 0, 0.3, 1) 0.1s forwards;
+}
+@keyframes ignitionLogoFade { 0%, 60% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes ignitionWipe {
+    0%   { clip-path: inset(0 100% 0 0); }
+    100% { clip-path: inset(0 0 0 0); }
+}
+@keyframes ignitionVeilRecede {
+    0%, 50% { opacity: 1; }
+    100%    { opacity: 0; visibility: hidden; }
+}
+
+/* Hero copy arrives with the light, not before it. Fully visible by default -
+   the staggered entrance only runs during the sequence itself. */
+html[data-ignition="igniting"] .ignition-reveal {
+    opacity: 0;
+    transform: translateY(14px);
+    animation: ignitionRevealIn 0.5s var(--ease) forwards;
+}
+html[data-ignition="igniting"] .ignition-reveal-1 { animation-delay: 0.40s; }
+html[data-ignition="igniting"] .ignition-reveal-2 { animation-delay: 0.50s; }
+html[data-ignition="igniting"] .ignition-reveal-3 { animation-delay: 0.60s; }
+html[data-ignition="igniting"] .ignition-reveal-4 { animation-delay: 0.70s; }
+@keyframes ignitionRevealIn { to { opacity: 1; transform: translateY(0); } }
+
+/* ============================================================================
+   MOTION
+   ============================================================================ */
+
+.page-transition { animation: pageIn 0.6s var(--ease) forwards; }
+@keyframes pageIn { from { opacity: 0; } to { opacity: 1; } }
+
+/*
+ * Scroll reveals are gated on html[data-reveal="on"], which the inline script
+ * in app/layout.tsx sets synchronously before first paint. The point is
+ * fail-safe content: if scripting is unavailable or that script never runs,
+ * the hidden state is never applied and everything renders plainly visible.
+ * Content must never depend on JavaScript merely to be readable.
+ */
+[data-reveal="on"] .reveal-hidden,
+[data-reveal="on"] .reveal-stagger {
+    opacity: 0;
+    transform: translateY(22px);
+}
+.reveal-hidden, .reveal-stagger {
+    transition: opacity 0.9s var(--ease), transform 0.9s var(--ease);
+}
+[data-reveal="on"] .reveal-hidden.reveal-visible,
+[data-reveal="on"] .reveal-stagger.reveal-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* The wok toss - for the two signature dishes only. A brief arc and settle
+   with a touch of overshoot, echoing the "rhythm of the wok" language on the
+   page, rather than another plain fade-up. */
+[data-reveal="on"] .reveal-toss {
+    opacity: 0;
+    transform: translateY(28px) rotate(-5deg) scale(0.94);
+}
+.reveal-toss {
+    transition: opacity 0.7s var(--ease),
+                transform 0.9s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+[data-reveal="on"] .reveal-toss.reveal-visible {
+    opacity: 1;
+    transform: translateY(0) rotate(0) scale(1);
+}
+
+/* Scroll cue: a small ember drifting up and fading, carrying the fire motif
+   into an ordinary affordance. */
+.ember-drift-track {
+    position: relative;
+    display: block;
+    width: 1px;
+    height: 40px;
+    margin: 0 auto;
+    background: color-mix(in srgb, var(--brand-powder) 40%, transparent);
+}
+.ember-drift-dot {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--brand-orange);
+    box-shadow: 0 0 8px 2px color-mix(in srgb, var(--brand-orange) 60%, transparent);
+    transform: translate(-50%, 0);
+    animation: emberDrift 2.4s ease-in-out infinite;
+}
+@keyframes emberDrift {
+    0%   { transform: translate(-50%, 0); opacity: 0; }
+    18%  { opacity: 1; }
+    82%  { opacity: 0.15; }
+    100% { transform: translate(-50%, -40px); opacity: 0; }
+}
+
+/* Respect user motion preferences (WCAG 2.3.3). Revealed content must never be
+   left hidden when its transition is disabled. */
+@media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    *, *::before, *::after {
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
         scroll-behavior: auto !important;
     }
-    /* Ensure scroll-revealed content is never left hidden */
-    .reveal-hidden,
-    .reveal-toss {
+    .reveal-hidden, .reveal-stagger, .reveal-toss {
         opacity: 1 !important;
         transform: none !important;
     }
-    .reveal-clip {
-        clip-path: none !important;
-    }
+    .dish--angled > img,
+    .dish--angled .dish-img { transform: none; }
     .ember-drift-dot {
         animation: none !important;
-        opacity: 0.5 !important;
+        opacity: 0.6 !important;
         transform: translate(-50%, -18px) !important;
     }
 }
+
+/* ============================================================================
+   LEGAL - privacy and terms. Long-form reading, so the measure is tight and
+   the hierarchy is quiet.
+   ============================================================================ */
+
+.legal { min-height: 100vh; background: var(--surface-page); }
+.legal__inner {
+    max-width: 780px;
+    padding-block: calc(var(--header-h) + 48px) var(--space-lg);
+}
+.legal__back {
+    display: inline-block;
+    margin-bottom: var(--space-md);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--brand-blue);
+    text-decoration: none;
+}
+.legal__back:hover { text-decoration: underline; }
+.legal h1 { font-size: clamp(2rem, 5vw, 3.2rem); margin-bottom: var(--space-md); }
+.legal h2 { font-size: 1.25rem; margin: var(--space-md) 0 var(--space-xs); }
+.legal p, .legal li { color: var(--text-secondary); max-width: var(--measure); }
+.legal p { margin-bottom: var(--space-xs); }
+.legal ul { margin: 0 0 var(--space-xs) 20px; }
+.legal a { color: var(--brand-blue); }
+.legal__updated {
+    margin-top: var(--space-lg);
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    opacity: 0.75;
+}
+
+/* ============================================================================
+   ADMIN - the private menu-management panel. Deliberately plain: it is a tool,
+   not a brand surface.
+   ============================================================================ */
+
+.admin { display: flex; min-height: 100vh; background: var(--surface-tint); }
+.admin__side {
+    width: 264px;
+    flex-shrink: 0;
+    background: var(--brand-white);
+    border-right: 1px solid var(--border-soft);
+    display: flex;
+    flex-direction: column;
+}
+.admin__brand { padding: var(--space-sm); border-bottom: 1px solid var(--border-soft); }
+.admin__brand h2 { font-size: 1.4rem; margin-top: 4px; }
+.admin__nav { display: flex; flex-direction: column; gap: 4px; padding: var(--space-xs); flex: 1; }
+.admin__nav a {
+    padding: 11px 14px;
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    transition: background-color 0.2s var(--ease), color 0.2s var(--ease);
+}
+.admin__nav a:hover { background: var(--surface-tint); color: var(--brand-blue); }
+.admin__nav a[aria-current] {
+    background: var(--brand-blue);
+    color: var(--brand-white);
+    font-weight: 600;
+}
+.admin__foot { padding: var(--space-xs); border-top: 1px solid var(--border-soft); }
+.admin__main { flex: 1; overflow-y: auto; padding: var(--space-md); }
+.admin__inner { max-width: 1100px; margin-inline: auto; }
+.admin__cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: var(--space-xs);
+}
+.admin__card {
+    background: var(--brand-white);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-md);
+    padding: var(--space-sm);
+}
+.admin__card h3 { font-size: 1.1rem; margin-bottom: 6px; }
+.admin__card p { font-size: 0.9rem; color: var(--text-secondary); }
+
+.admin-login {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: var(--surface-tint);
+    padding: var(--space-sm);
+}
+.admin-login__box {
+    width: 100%;
+    max-width: 400px;
+    background: var(--brand-white);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    padding: var(--space-md);
+}
+.admin-login__error {
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 0.86rem;
+    text-align: center;
+    color: #8a1c1c;
+    background: #fdecec;
+    border: 1px solid #f3c9c9;
+}
+
+@media (max-width: 780px) {
+    .admin { flex-direction: column; }
+    .admin__side { width: 100%; }
+    .admin__nav { flex-direction: row; flex-wrap: wrap; }
+}
+
+.premium-input {
+    width: 100%;
+    padding: 12px 14px;
+    background: var(--brand-white);
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: 0.95rem;
+    transition: border-color 0.3s var(--ease);
+}
+.premium-input:focus { outline: none; border-color: var(--brand-blue); }
+.premium-input::placeholder { color: var(--text-secondary); }
