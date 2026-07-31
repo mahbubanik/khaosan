@@ -60,6 +60,7 @@ export default function Home() {
             {/* ─── HERO ─────────────────────────────────────────────────── */}
             <section className="hero on-deep">
                 <BackgroundVideo
+                    priority
                     src="/assets/Brand_Asset/Khao_San_Thoughtful_interiors_fl_1602693357399955_720p_20260706.mp4"
                     poster="/assets/posters/hero.webp"
                     className="hero__video hero-ken-burns"
