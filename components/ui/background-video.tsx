@@ -58,6 +58,7 @@ export default function BackgroundVideo({ src, style, className, poster, label, 
     return (
         <video
             ref={videoRef}
+            autoPlay={!reducedMotion}
             loop
             muted
             playsInline
