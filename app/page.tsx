@@ -358,9 +358,9 @@ export default function Home() {
                 />
                 <div className="hero__scrim" aria-hidden="true" />
                 <div className="container contact__inner reveal-hidden">
-                    <span className="overline" style={{ textShadow: "var(--shadow-text)" }}>Come and Eat</span>
-                    <h2 className="display-2" style={{ textShadow: "var(--shadow-text)" }}>Taste the fire.</h2>
-                    <p style={{ textShadow: "var(--shadow-text)" }}>
+                    <span className="overline" style={{ textShadow: "var(--shadow-text-heavy)" }}>Come and Eat</span>
+                    <h2 className="display-2" style={{ textShadow: "var(--shadow-text-heavy)" }}>Taste the fire.</h2>
+                    <p style={{ textShadow: "var(--shadow-text-heavy)" }}>
                         Contact us to book a table, ask about a large party, or order ahead. We answer
                         during opening hours.
                     </p>

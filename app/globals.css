@@ -102,7 +102,8 @@
 
     /* For type sitting over photography or video only - never on a flat
        surface, where it just looks smudged. */
-    --shadow-text: 0 2px 18px rgba(0, 0, 0, 0.5), 0 1px 4px rgba(0, 0, 0, 0.35);
+    --shadow-text: 0 2px 18px rgba(0, 0, 0, 0.7), 0 1px 4px rgba(0, 0, 0, 0.5);
+    --shadow-text-heavy: 0 4px 24px rgba(0, 0, 0, 0.85), 0 2px 8px rgba(0, 0, 0, 0.65);
 
     --ease: cubic-bezier(0.22, 1, 0.36, 1);
     --header-h: 84px;
@@ -669,7 +670,7 @@ html[data-ignition="igniting"] .site-header {
     text-transform: uppercase;
     color: var(--brand-powder);
     margin-bottom: var(--space-sm);
-    text-shadow: var(--shadow-text);
+    text-shadow: var(--shadow-text-heavy);
 }
 /* The hero lockup mirrors the brand's own: a display line above a brush line,
    exactly as the gift cards and menu cover set it. */
@@ -680,7 +681,7 @@ html[data-ignition="igniting"] .site-header {
     font-weight: 700;
     letter-spacing: -0.02em;
     color: var(--brand-white);
-    text-shadow: var(--shadow-text);
+    text-shadow: var(--shadow-text-heavy);
     margin-bottom: var(--space-sm);
 }
 .hero__script {
@@ -696,7 +697,7 @@ html[data-ignition="igniting"] .site-header {
     margin: 0 auto var(--space-md);
     font-size: clamp(1rem, 1.6vw, 1.15rem);
     color: var(--brand-powder);
-    text-shadow: var(--shadow-text);
+    text-shadow: var(--shadow-text-heavy);
 }
 .hero__actions {
     display: flex;
@@ -803,6 +804,7 @@ html[data-ignition="igniting"] .site-header {
     font-weight: 700;
     letter-spacing: 0.16em;
     text-transform: uppercase;
+    text-shadow: var(--shadow-text-heavy);
     color: var(--brand-white);
     background: linear-gradient(to top,
         color-mix(in srgb, var(--brand-blue) 92%, transparent) 0%,
@@ -1192,8 +1194,8 @@ html[data-ignition="igniting"] .site-header {
     z-index: 2;
     font-size: 0.62rem;
     font-weight: 700;
-    letter-spacing: 0.18em;
     text-transform: uppercase;
+    text-shadow: var(--shadow-text-heavy);
     color: var(--brand-orange);
 }
 
@@ -1763,8 +1765,8 @@ html[data-ignition="igniting"] .site-header {
     z-index: 2;
     font-size: 0.62rem;
     font-weight: 700;
-    letter-spacing: 0.18em;
     text-transform: uppercase;
+    text-shadow: var(--shadow-text-heavy);
     color: var(--brand-orange);
 }
 
