@@ -18,15 +18,6 @@ import Image from 'next/image';
  * mark the ritual as seen once the sequence finishes playing.
  */
 export default function IgnitionVeil() {
-    useEffect(() => {
-        if (document.documentElement.getAttribute('data-ignition') !== 'igniting') return;
-        const timer = setTimeout(() => {
-            sessionStorage.setItem('khaosan-ignited', '1');
-            document.documentElement.setAttribute('data-ignition', 'lit');
-        }, 1000);
-        return () => clearTimeout(timer);
-    }, []);
-
     return (
         <div className="ignition-veil" aria-hidden="true">
             <div className="ignition-logo-container">

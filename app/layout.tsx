@@ -133,7 +133,7 @@ export default function RootLayout({
         */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){var d=document.documentElement;try{d.setAttribute('data-reveal','on');var isHome=location.pathname==='/';var reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;var seen=sessionStorage.getItem('khaosan-ignited')==='1';d.setAttribute('data-ignition',(isHome&&!reduced&&!seen)?'igniting':'lit');}catch(e){d.setAttribute('data-ignition','lit');}})();`,
+            __html: `(function(){var d=document.documentElement;try{d.setAttribute('data-reveal','on');var isHome=location.pathname==='/';var reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;var seen=sessionStorage.getItem('khaosan-ignited')==='1';if(isHome&&!reduced&&!seen){d.setAttribute('data-ignition','igniting');setTimeout(function(){sessionStorage.setItem('khaosan-ignited','1');d.setAttribute('data-ignition','lit');},1000);}else{d.setAttribute('data-ignition','lit');}}catch(e){d.setAttribute('data-ignition','lit');}})();`,
           }}
         />
       </head>
